@@ -15,4 +15,6 @@ The 'EntControl' plug-in is a Sourcemod-Plugin for people who want to control th
  * Webinterface using an integrated webserver.
  * Accessing hiding-spots from .nav-files
 
-You might want to look into the extension as well
+Official Thread: https://forums.alliedmods.net/showthread.php?t=157075
+
+There also is an optional extension you can find under https://github.com/LeGone/Entcontrol-Extension
