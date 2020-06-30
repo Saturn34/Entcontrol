@@ -5,30 +5,35 @@
 	{
 		"en"	"Wrong Entity"
 		"de"	"Falsches Objekt"
+		"ru"	"Неверный объект"
 	}
 
 	"Wrong Position"
 	{
 		"en"	"Wrong Position"
 		"de"	"Ungueltige Position"
+		"ru"	"Неверная позиция"
 	}
 
 	"Moved to saved position"
 	{
 		"en"	"Moved to saved position"
 		"de"	"Zur Position teleportiert"
+		"ru"	"Перемещён в сохранённую позицию"
 	}
 
 	"Select Position first"
 	{
 		"en"	"You have to save a position first!"
 		"de"	"Du musst zuerst eine Position speichern!"
+		"ru"	"Вы должны сначала сохранить позицию!"
 	}
 
 	"Position saved"
 	{
 		"en"	"Position saved"
 		"de"	"Position gespeichert"
+		"ru"	"Позиция сохранена"
 	}
 
 	"Distance"
@@ -36,6 +41,7 @@
 		"#format"	"{1:f}"
 		"en"	"Distance: {1}"
 		"de"	"Abstand: {1}"
+		"ru"	"Расстояние: {1}"
 	}
 
 	"Spawned"
@@ -43,6 +49,7 @@
 		"#format"	"{1:s}"
 		"en"	"Spawned: {1}"
 		"de"	"Erstellt: {1}"
+		"ru"	"Создан: {1}"
 	}
 
 	// Edit
@@ -50,24 +57,28 @@
 	{
 		"en"	"Object is now frozen"
 		"de"	"Objekt vereist"
+		"ru"	"Объект сейчас заморожен"
 	}
 
 	"UnFrozen"
 	{
 		"en"	"Object is now unfrozen"
 		"de"	"Objekt enteist"
+		"ru"	"Объект сейчас разморожен"
 	}
 
 	"Breakable"
 	{
 		"en"	"Object is now breakable"
 		"de"	"Objekt zerstoerbar"
+		"ru"	"Объект теперь ломаемый"
 	}
 
 	"Invincible"
 	{
 		"en"	"Object is now invincible"
 		"de"	"Objekt unverwundbar"
+		"ru"	"Объект теперь не ломаемый"
 	}
 
 	"Gravity"
@@ -75,6 +86,7 @@
 		"#format"	"{1:f}"
 		"en"	"Gravity: {1}"
 		"de"	"Gravitation: {1}"
+		"ru"	"Сила тяжести: {1}"
 	}
 
 	"Size"
@@ -82,6 +94,7 @@
 		"#format"	"{1:f}"
 		"en"	"Size: {1}"
 		"de"	"Groesse: {1}"
+		"ru"	"Размер: {1}"
 	}
 	
 	"Speed"
@@ -89,71 +102,83 @@
 		"#format"	"{1:f}"
 		"en"	"Speed: {1}"
 		"de"	"Geschwindigkeit: {1}"
+		"ru"	"Скорость: {1}"
 	}
 
 	"Touched"
 	{
 		"en"	"Object touched"
 		"de"	"Benutzen simuliert"
+		"ru"	"Объект коснулся"
 	}
 
 	"Ignited"
 	{
 		"en"	"Object ignited"
-		"de"	"Objekt entz�ndet"
+		"de"	"Objekt entzьndet"
+		"ru"	"Объект воспламенён"
 	}
 
 	"Visible"
 	{
 		"en"	"Object is now visible"
 		"de"	"Objekt ist nun sichtbar"
+		"ru"	"Объект теперь виден"
 	}
 
 	"Invisible"
 	{
 		"en"	"Object is now invisible"
 		"de"	"Objekt ist nun unsichtbar"
+		"ru"	"Объект теперь невидим"
 	}
 
 	"Solid"
 	{
 		"en"	"Object is now solid"
 		"de"	"Objekt ist nun undurchgehbar"
+		"ru"	"Объект теперь твёрдый"
 	}
 
 	"Unsolid"
 	{
 		"en"	"Object is now unsolid"
 		"de"	"Objekt ist nun durchgehbar"
+		"ru"	"Объект теперь не твёрдый"
 	}
 
 	"Activated"
 	{
 		"en"	"Object is now activated"
 		"de"	"Objekt aktiviert"
+		"ru"	"Объект теперь активирован"
 	}
 
 	"HealthToOne"
 	{
 		"en"	"Set health to 1"
 		"de"	"Gesundheit auf 1 gesetzt"
+		"ru"	"Установить здоровье на 1"
 	}
 
 	"HealthToFull"
 	{
 		"en"	"Set health to 100"
 		"de"	"Gesundheit auf 100 gesetzt"
+		"ru"	"Установить здоровье на 100"
 	}
 
 	"SkinChanged"
 	{
 		"en"	"Skin changed"
 		"de"	"Skin geaendert"
+		"ru"	"Скин изменён"
 	}
 
 	"SaveSkinFirst"
 	{
 		"en"	"You have to save a skin first (helper menu)"
 		"de"	"Du musst zuerst einen Skin speichern (Im Hilfsmenue)"
+		"ru"	"Вы должны сначала сохранить скин (вспомогательное меню)"
 	}
 }
