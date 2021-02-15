@@ -3,57 +3,57 @@
  */
 
 // + Entities
-native EC_Entity_GetOutputCount(entity, String:sOutputName[]);
-native bool:EC_Entity_GetOutputFirst(entity, String:sOutputName[]);
-native bool:EC_Entity_GetOutputAt(entity, String:sOutputName[], i);
+native int EC_Entity_GetOutputCount(int entity, char[] sOutputName);
+native bool EC_Entity_GetOutputFirst(int entity, char[] sOutputName);
+native bool EC_Entity_GetOutputAt(int entity, char[] sOutputName, int i);
 // - Entities
 
 // + Navigation(.nav needed) - Used to spawn players/npcs/...
 // Thanks to AnthonyIacono - https://github.com/AnthonyIacono for his navigation-parsing-code
-native bool:EC_Nav_Load(); // .nav-files will automatically extracted from .vpk file
-native bool:EC_Nav_CachePositions();
-native bool:EC_Nav_GetNextHidingSpot(Float:randomPosition[3]);
+native bool EC_Nav_Load(); // .nav-files will automatically extracted from .vpk file
+native bool EC_Nav_CachePositions();
+native bool EC_Nav_GetNextHidingSpot(float randomPosition[3]);
 // - Navigation
 
 // + Webserver
 // Not working? Look into your logfile: "Not enough space on the stack"? Type the following to increase the stackspace to 131072 bytes (131072/4=32768 cells)
 // #pragma dynamic 32768
 #define EC_MAXHTTPRESULT 131072
-forward Action:EC_OnWebserverCallFunction(const userID, const String:function[], const String:arg[], String:result[]); // resultsize is max 131072 bytes
-native EC_Web_GetPort();
-native EC_Web_GetIP(String:address[]); // text is in/out
+forward Action EC_OnWebserverCallfunc(const int userID, const char[] func, const char[] arg, char[] result); // resultsize is max 131072 bytes
+native int EC_Web_GetPort();
+native void EC_Web_GetIP(char[] address); // text is in/out
 // - Webserver
 
 // + HLLib - http://nemesis.thewavelength.net/index.php?p=35
-native bool:EC_HLLib_OpenFile(const String:function[]); // BSP, GCF, NCF, PAK, VPK, WAD, XZP and uncompressed ZIP package formats are supported.
-native bool:EC_HLLib_ItemExist(const String:item[]);
-native bool:EC_HLLib_Extract(const String:source[], const String:destination[]);
+native bool EC_HLLib_OpenFile(const char[] func); // BSP, GCF, NCF, PAK, VPK, WAD, XZP and uncompressed ZIP package formats are supported.
+native bool EC_HLLib_ItemExist(const char[] item);
+native bool EC_HLLib_Extract(const char[] source, const char[] destination);
 native EC_HLLib_Close();
 // - HLLib
 
 // + Dlib - http://dlib.net/
-native EC_Dlib_CRC32(const String:text[]);
-native EC_Dlib_MD5(const String:text[]); // text is in/out
-native EC_Dlib_HammingDistance(num1, num2);
-native EC_Dlib_Hash(const String:text[]);
-native Float:EC_Dlib_GaussianRandomHash(num1, num2, num3);
+native void EC_Dlib_CRC32(const char[] text);
+native void EC_Dlib_MD5(const char[] text); // text is in/out
+native void EC_Dlib_HammingDistance(num1, num2);
+native void EC_Dlib_Hash(const char[] text);
+native float EC_Dlib_GaussianRandomHash(num1, num2, num3);
 // - Dlib
 
 // + Bugs
-// Please do not abuse this feature. It´s for reporting bugs related to entcontrol.
-native EC_ReportBug(const String:summary[], const String:format[], any:...);
+// Please do not abuse this feature. It's for reporting bugs related to entcontrol.
+native void EC_ReportBug(const char[] summary, const char[] format, any ...);
 // - Bugs
 
 // + NPCs
 // Possible NPC-Names:
 // npc_antlion,npc_antlionguard,npc_barney,npc_dog,npc_gman,npc_headcrab,npc_police,npc_soldier,npc_sentrygun,npc_vortigaunt,npc_synth,npc_zombie,...
-native EC_NPC_Spawn(String:sNPCName[], Float:x, Float:y, Float:z);
+native void EC_NPC_Spawn(char[] sNPCName, float x, float y, float z);
 // - NPCs
 
 /**
  * _________________Do not edit below this line!_______________________
  */
-public Extension:__ext_smec = 
+public Extension __ext_smec = 
 {
 	name = "Entcontrol",
 	file = "entcontrol.ext",
@@ -70,7 +70,7 @@ public Extension:__ext_smec =
 };
 
 #if !defined REQUIRE_EXTENSIONS
-public __ext_smec_SetNTVOptional()
+public void __ext_smec_SetNTVOptional()
 {
 	MarkNativeAsOptional("EC_Entity_GetOutputCount");
 	MarkNativeAsOptional("EC_Entity_GetOutputFirst");
