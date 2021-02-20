@@ -1,7 +1,3 @@
-/* put the line below after all of the includes!
-#pragma newdecls required
-*/
-
 /* 
 	------------------------------------------------------------------------------------------
 	EntControl::BaseNPC
