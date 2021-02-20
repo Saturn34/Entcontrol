@@ -1,3 +1,7 @@
+/* put the line below after all of the includes!
+#pragma newdecls required
+*/
+
 /* 
 	------------------------------------------------------------------------------------------
 	EntControl::NPCs
@@ -6,8 +10,8 @@
 */
 
 // Admin Flags
-new Handle:gAdminFlagNPC;
-new gMuzzle1;
+Handle gAdminFlagNPC;
+int gMuzzle1;
 
 // Include our NPCs
 #include "NPCs/BaseNPC.sp"
@@ -26,7 +30,7 @@ new gMuzzle1;
 #include "NPCs/synth.sp"
 #include "NPCs/dog.sp"
 
-public InitNPCs()
+public void InitNPCs()
 {
 	if (gameMod == CSS || gameMod ==TF)
 	{
@@ -67,7 +71,7 @@ public InitNPCs()
 	}
 }
 
-public RegNPCsCommands()
+public void RegNPCsCommands()
 {
 	RegConsoleCmd("sm_entcontrol_npc_fake", Command_Fake, "Fake-Client");
 	
@@ -102,15 +106,16 @@ public RegNPCsCommands()
 	Show NPCs
 	------------------------------------------------------------------------------------------
 */
-public Action:Command_ShowNPCs(client, args)
+public Action Command_ShowNPCs(int client, int args)
 {
-	new String:sClassName[64];
-	new Float:vClientPosition[3], Float:vEntityPosition[3];
+	char sClassName[64];
+	float vClientPosition[3];
+	float vEntityPosition[3];
 	
 	GetClientEyePosition(client, vClientPosition);
-	new count = GetMaxEntities()-100;
+	int count = GetMaxEntities()-100;
 
-	for (new i = 2; i < count; i++)
+	for (int i = 2; i < count; i++)
 	{
 		if (IsValidEdict(i) && IsValidEntity(i)) 
 		{
@@ -126,11 +131,11 @@ public Action:Command_ShowNPCs(client, args)
 	}
 }
 
-public Action:OnStartTouch(entity, other)
+public Action OnStartTouch(int entity, int other)
 {
 	if (IsValidEntity(other) && IsValidEdict(other))
 	{
-		decl String:classname[32];
+		char classname[32];
 		GetEntPropString(other, Prop_Data, "m_iClassname", classname, sizeof(classname));
 		if (StrContains(classname, "npc_") != -1)
 			BaseNPC_Death(other);
@@ -178,7 +183,7 @@ public Action:OnEndTouch(entity, other)
 	Just for testing ...
 	------------------------------------------------------------------------------------------
 */
-public Action:Command_Fake(client, args)
+public Action Command_Fake(int client, int args)
 {
 	if (CanUseCMD(client, gAdminFlagNPC) && !fakeClient)
 	{

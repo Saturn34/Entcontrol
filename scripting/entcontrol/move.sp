@@ -1,3 +1,7 @@
+/* put the line below after all of the includes!
+#pragma newdecls required
+*/
+
 /* 
 	------------------------------------------------------------------------------------------
 	EntControl::Move
@@ -6,12 +10,12 @@
 */
 
 // Admin Flags
-new Handle:gAdminFlagThrow;
-new Handle:gAdminFlagDistance;
+Handle gAdminFlagThrow;
+Handle gAdminFlagDistance;
 
-new Handle:gAdminCanThrowSelf = INVALID_HANDLE;
+Handle gAdminCanThrowSelf = INVALID_HANDLE;
 
-public RegMoveCommands()
+public void RegMoveCommands()
 {
 	gAdminFlagThrow = CreateConVar("sm_entcontrol_throw_fl", "z", "The needed Flag to throw objects");
 	RegConsoleCmd("sm_entcontrol_throw", Command_Throw, "Throw Object");
@@ -29,12 +33,12 @@ public RegMoveCommands()
 	Throws the entity forward
 	------------------------------------------------------------------------------------------
 */
-public Action:Command_Throw(client, args)
+public Action Command_Throw(int client, int args)
 {
 	if (!CanUseCMD(client, gAdminFlagThrow))
 		return (Plugin_Handled);
 
-	new ent;
+	int ent;
 	if (GetConVarBool(gAdminCanThrowSelf)) // I know this may be slow ... but we need the ability to change the cvar every time
 		ent = GetObject(client);
 	else
@@ -42,8 +46,10 @@ public Action:Command_Throw(client, args)
 
 	if (ent != -1)
 	{
-		new Float:vecDir[3], Float:vecPos[3], Float:vecVel[3];
-		new Float:viewang[3];
+		float vecDir[3];
+		float vecPos[3];
+		float vecVel[3];
+		float viewang[3];
 
 		// get client info
 		GetClientEyeAngles(client, viewang);
@@ -61,7 +67,7 @@ public Action:Command_Throw(client, args)
 		ScaleVector(vecVel, 10.0);
 		TeleportEntity(ent, NULL_VECTOR, NULL_VECTOR, vecVel);
 
-		new String:edictname[128];
+		char edictname[128];
 		GetEdictClassname(ent, edictname, 128);
 
 		if (StrEqual(edictname, "player"))
@@ -83,7 +89,7 @@ public Action:Command_Throw(client, args)
 	Modifies the distance between the client and the entity
 	------------------------------------------------------------------------------------------
 */
-public Action:Command_DistanceUp(client, args)
+public Action Command_DistanceUp(int client, int args)
 {  
 	if (!CanUseCMD(client, gAdminFlagDistance) || !ValidGrab(client)) return (Plugin_Handled);
 
@@ -100,7 +106,7 @@ public Action:Command_DistanceUp(client, args)
 	Modifies the distance between the client and the entity
 	------------------------------------------------------------------------------------------
 */
-public Action:Command_DistanceDown(client, args)
+public Action Command_DistanceDown(int client, int args)
 {  
 	if (!CanUseCMD(client, gAdminFlagDistance) || !ValidGrab(client)) return (Plugin_Handled);
 

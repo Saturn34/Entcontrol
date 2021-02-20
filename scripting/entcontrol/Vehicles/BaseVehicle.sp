@@ -1,3 +1,7 @@
+/* put the line below after all of the includes!
+#pragma newdecls required
+*/
+
 /* 
 	------------------------------------------------------------------------------------------
 	EntControl::BaseVehicle
@@ -6,16 +10,16 @@
 */
 
 // Admin Flags
-new Handle:gAdminFlagVehicles;
+Handle gAdminFlagVehicles;
 
-new gClientVehicle[MAXPLAYERS];
+int gClientVehicle[MAXPLAYERS];
 
 #define VEHICLE_SCREENOVERLAY "r_screenoverlay debug/yuv" // effects/flicker_256,effects/combine_binocoverlay
 #define GUNMODEL "models/props_rooftop/Gutter_Pipe_128.mdl" // models/props_rooftop/roof_vent003.mdl
-new gVehicleMuzzleFlash;
-new gVehicleMuzzleSmoke;
+int gVehicleMuzzleFlash;
+int gVehicleMuzzleSmoke;
 
-public BaseVehicle_Init()
+public void BaseVehicle_Init()
 {
 	gAdminFlagVehicles = CreateConVar("sm_entcontrol_v_fl", "z", "The needed Flag to spawn Vehicles");
 	
@@ -33,17 +37,17 @@ public BaseVehicle_Init()
 	gVehicleMuzzleSmoke = PrecacheModel("materials/sprites/gunsmoke.vmt");
 }
 
-public BaseVehicle_Commands()
+public void BaseVehicle_Commands()
 {
 	RegConsoleCmd("sm_entcontrol_bv_spawn", Command_BaseVehicle_Spawn, "Spawn Test Vehicle");
 }
 
-public Action:Command_BaseVehicle_Spawn(client, args)
+public Action Command_BaseVehicle_Spawn(int client, int args)
 {
 	if (!CanUseCMD(client, gAdminFlagVehicles)) return (Plugin_Handled);
 	
-	new Float:position[3];
-	new String:tankRefAsString[32];
+	float position[3];
+	char tankRefAsString[32];
 	
 	if (!GetPlayerEye(client, position))
 		return (Plugin_Handled);
@@ -51,8 +55,8 @@ public Action:Command_BaseVehicle_Spawn(client, args)
 	position[2] += 20.0;
 	
 	// ================== Now create the Tank ===================
-	new tank = CreateEntityByName("prop_physics_override");
-	new gun = CreateEntityByName("prop_dynamic");
+	int tank = CreateEntityByName("prop_physics_override");
+	int gun = CreateEntityByName("prop_dynamic");
 	
 	IntToString(EntIndexToEntRef(tank), tankRefAsString, sizeof(tankRefAsString)-1);
 
@@ -75,7 +79,7 @@ public Action:Command_BaseVehicle_Spawn(client, args)
 	AcceptEntityInput(tank, "EnableDamageForces");
 	
 	// ================== KEEP HEIGHT ==================
-	new keepupright = CreateEntityByName("phys_keepupright");
+	int keepupright = CreateEntityByName("phys_keepupright");
 	DispatchKeyValue(keepupright, "target", tankRefAsString);
 	DispatchSpawn(keepupright);
 	position[2] -= 80.0;
@@ -123,13 +127,14 @@ public Action:Command_BaseVehicle_Spawn(client, args)
 	return (Plugin_Handled);
 }
 
-public CreateWheel(vehicle, Float:position[3])
+public void CreateWheel(int vehicle, float position[3])
 {
 //return;
-	new String:vehicleRefAsString[32], String:wheelRefAsString[32];
+	char vehicleRefAsString[32];
+	char wheelRefAsString[32];
 	IntToString(EntIndexToEntRef(vehicle), vehicleRefAsString, sizeof(vehicleRefAsString)-1);
 	
-	new wheel = CreateEntityByName("prop_physics_override");
+	int wheel = CreateEntityByName("prop_physics_override");
 	IntToString(EntIndexToEntRef(wheel), wheelRefAsString, sizeof(wheelRefAsString)-1);
 	//DispatchKeyValueFloat(wheel, "physdamagescale", 1000.0);
 	DispatchKeyValue(wheel, "model", "models/props_vehicles/apc_tire001.mdl");
@@ -139,7 +144,7 @@ public CreateWheel(vehicle, Float:position[3])
 	SetEntityMoveType(wheel, MOVETYPE_VPHYSICS);
 	TeleportEntity(wheel, position, NULL_VECTOR, NULL_VECTOR);
 	
-	new phys_constraint = CreateEntityByName("phys_ballsocket");
+	int phys_constraint = CreateEntityByName("phys_ballsocket");
 	DispatchKeyValue(phys_constraint, "attach2", wheelRefAsString);
 	DispatchKeyValue(phys_constraint, "attach1", vehicleRefAsString);
 	DispatchSpawn(phys_constraint);
@@ -148,16 +153,16 @@ public CreateWheel(vehicle, Float:position[3])
 	TeleportEntity(phys_constraint, position, NULL_VECTOR, NULL_VECTOR);
 }
 
-public OnUseFunc(const String:output[], tank, ignorable, Float:delay)
+public void OnUseFunc(const char[] output, int tank, int ignorable, float delay)
 {
-	new client;
+	int client;
 
 	// ================== FIND CLIENT ==================
-	for (new i = 1; i <= MaxClients; i++)
+	for (int i = 1; i <= MaxClients; i++)
 	{
 		if (IsClientConnectedIngame(i) && !IsFakeClient(i))
 		{
-			new target = GetClientAimTarget(i, false);
+			int target = GetClientAimTarget(i, false);
 			if (target == tank)
 			{
 				client = i;
@@ -179,7 +184,7 @@ public OnUseFunc(const String:output[], tank, ignorable, Float:delay)
 	}
 }
 
-public BaseVehicle_Enter(vehicle, client)
+public void BaseVehicle_Enter(int vehicle, int client)
 {
 	if (BaseVehicle_GetOwner(vehicle))
 	{
@@ -190,7 +195,7 @@ public BaseVehicle_Enter(vehicle, client)
 	CPrintToChat(client, "{greenyellow}Entering Vehicle");
 	gClientVehicle[client] = EntIndexToEntRef(vehicle);
 	
-	new Float:pos[3];
+	float pos[3];
 	GetEntPropVector(vehicle, Prop_Send, "m_vecOrigin", pos);
 
 	// ================== PARENT CLIENT TO VEHICLE ==================
@@ -198,7 +203,7 @@ public BaseVehicle_Enter(vehicle, client)
 	pos[2] += 20;
 	TeleportEntity(client, pos, NULL_VECTOR, NULL_VECTOR);
 	
-	new String:tankRefAsString[32];
+	char tankRefAsString[32];
 	IntToString(EntIndexToEntRef(vehicle), tankRefAsString, sizeof(tankRefAsString)-1);
 	SetVariantString(tankRefAsString);
 	AcceptEntityInput(client, "SetParent");
@@ -222,7 +227,7 @@ public BaseVehicle_Enter(vehicle, client)
 	EmitSoundToAll("vehicles/v8/v8_start_loop1.wav", vehicle);
 }
 
-public BaseVehicle_Leave(vehicle, client)
+public void BaseVehicle_Leave(int vehicle, int client)
 {
 	if (BaseVehicle_GetOwner(vehicle) != client)
 	{
@@ -259,12 +264,16 @@ public BaseVehicle_Leave(vehicle, client)
 	Fixed_Base_Think
 	------------------------------------------------------------------------------------------
 */
-public BaseVehicle_Think(vehicle, client)
+public void BaseVehicle_Think(int vehicle, int client)
 {
-	new Float:vAngle[3], Float:vAngleVehicle[3], Float:vOrigin[3], Float:vAimPos[3], Float:vGunPos[3];
+	float vAngle[3];
+	float vAngleVehicle[3];
+	float vOrigin[3];
+	float vAimPos[3];
+	float vGunPos[3];
 
-	new gun = BaseVehicle_GetTurret(vehicle);
-	new owner = BaseVehicle_GetOwner(vehicle);
+	int gun = BaseVehicle_GetTurret(vehicle);
+	int owner = BaseVehicle_GetOwner(vehicle);
 	
 	if (owner == client)
 	{
@@ -276,12 +285,12 @@ public BaseVehicle_Think(vehicle, client)
 		else if (vAngle[0] < -35.0)
 			vAngle[0] = -35.0;
 
-		new Handle:trace = TR_TraceRayFilterEx(vOrigin, vAngle, MASK_VISIBLE, RayType_Infinite, TraceASDF, client);
+		Handle trace = TR_TraceRayFilterEx(vOrigin, vAngle, MASK_VISIBLE, RayType_Infinite, TraceASDF, client);
 
 		if (TR_DidHit(trace))
 		{
 			TR_GetEndPosition(vAimPos, trace);
-			new target = TR_GetEntityIndex(trace);
+			//int target = TR_GetEntityIndex(trace);
 			CloseHandle(trace);
 			
 			GetEntPropVector(vehicle, Prop_Send, "m_angRotation", vAngleVehicle);
@@ -300,7 +309,7 @@ public BaseVehicle_Think(vehicle, client)
 			vGunPos[1] = vOrigin[1];
 			vGunPos[2] = vOrigin[2];
 			
-			new button = GetClientButtons(client);
+			int button = GetClientButtons(client);
 			if (button & IN_ATTACK)
 			{
 				/*
@@ -329,7 +338,7 @@ public BaseVehicle_Think(vehicle, client)
 				EmitSoundToAll("ambient/explosions/explode_3.wav", 0, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL, -1, vAimPos);
 				makeexplosion(client, -1, vAimPos, "", 100);
 				
-				new shake = CreateEntityByName("env_shake");
+				int shake = CreateEntityByName("env_shake");
 				if (DispatchSpawn(shake))
 				{
 					DispatchKeyValueFloat(shake, "amplitude", 150.0);
@@ -341,11 +350,11 @@ public BaseVehicle_Think(vehicle, client)
 					
 					TeleportEntity(shake, vGunPos, NULL_VECTOR, NULL_VECTOR);
 
-					RemoveEntity(shake, 1.0);
+					KillEntity(shake, 1.0);
 				}
 				
 				// push back the vehicle
-				new pushback = CreateEntityByName("point_push");
+				int pushback = CreateEntityByName("point_push");
 				DispatchKeyValue(pushback, "enabled", "1");
 				DispatchKeyValue(pushback, "magnitude", "50.0");
 				DispatchKeyValue(pushback, "radius", "250.0");
@@ -357,10 +366,10 @@ public BaseVehicle_Think(vehicle, client)
 				AcceptEntityInput(pushback, "Enable");
 
 				// Remove our Entity
-				RemoveEntity(pushback, 0.1);
+				KillEntity(pushback, 0.1);
 				
 				// physExplode
-				new physExplode = CreateEntityByName("point_push");
+				int physExplode = CreateEntityByName("point_push");
 				DispatchKeyValue(physExplode, "enabled", "1");
 				DispatchKeyValue(physExplode, "magnitude", "500.0");
 				DispatchKeyValue(physExplode, "radius", "500.0");
@@ -372,7 +381,7 @@ public BaseVehicle_Think(vehicle, client)
 				AcceptEntityInput(physExplode, "Enable");
 
 				// Remove our Entity
-				RemoveEntity(physExplode, 0.1);
+				KillEntity(physExplode, 0.1);
 				
 				sendfademsg(client, 25, 25, FFADE_OUT, 255, 255, 255, 25);
 			}
@@ -380,9 +389,9 @@ public BaseVehicle_Think(vehicle, client)
 	}
 }
 
-public Action:BaseVehicle_Update(Handle:timer)
+public Action BaseVehicle_Update(Handle timer)
 {
-	for (new i = 1; i <= MaxClients; i++)
+	for (int i = 1; i <= MaxClients; i++)
 	{
 		if (gClientVehicle[i] != 0 && IsClientConnectedIngame(i) && !IsFakeClient(i))
 		{
@@ -399,7 +408,7 @@ public Action:BaseVehicle_Update(Handle:timer)
 	This will get the mounted turret
 	------------------------------------------------------------------------------------------
 */
-stock BaseVehicle_GetTurret(vehicle)
+stock int BaseVehicle_GetTurret(int vehicle)
 {
 	return (GetEntPropEnt(vehicle, Prop_Send, "m_hOwnerEntity"));
 }
@@ -410,7 +419,7 @@ stock BaseVehicle_GetTurret(vehicle)
 	This will set the mounted turret
 	------------------------------------------------------------------------------------------
 */
-stock BaseVehicle_SetTurret(vehicle, turret)
+stock void BaseVehicle_SetTurret(int vehicle, int turret)
 {
 	SetEntPropEnt(vehicle, Prop_Send, "m_hOwnerEntity", turret);
 }
@@ -421,7 +430,7 @@ stock BaseVehicle_SetTurret(vehicle, turret)
 	This will get the owner
 	------------------------------------------------------------------------------------------
 */
-stock BaseVehicle_GetOwner(vehicle)
+stock int BaseVehicle_GetOwner(int vehicle)
 {
 	return (GetEntProp(vehicle, Prop_Data, "m_iHammerID"));
 }
@@ -432,14 +441,15 @@ stock BaseVehicle_GetOwner(vehicle)
 	This will set the owner
 	------------------------------------------------------------------------------------------
 */
-stock BaseVehicle_SetOwner(vehicle, owner)
+stock void BaseVehicle_SetOwner(int vehicle, int owner)
 {
 	SetEntProp(vehicle, Prop_Data, "m_iHammerID", owner, 4);
 }
 
-public BaseVehicle_Turn(tank, bool:right)
+public void BaseVehicle_Turn(int tank, bool right)
 {
-	new Float:angles[3], Float:angle;
+	float angles[3];
+	float angle;
 	GetEntPropVector(tank, Prop_Send, "m_angRotation", angles);
 	
 	if (right)
@@ -457,9 +467,10 @@ public BaseVehicle_Turn(tank, bool:right)
 	TeleportEntity(tank, NULL_VECTOR, angles, NULL_VECTOR);
 }
 
-public BaseVehicle_Move(vehicle, bool:backward)
+public void BaseVehicle_Move(int vehicle, bool backward)
 {
-	new Float:angles[3], Float:pos[3];
+	float angles[3];
+	float pos[3];
 	GetEntPropVector(vehicle, Prop_Send, "m_angRotation", angles);
 	GetEntPropVector(vehicle, Prop_Send, "m_vecOrigin", pos);
 	

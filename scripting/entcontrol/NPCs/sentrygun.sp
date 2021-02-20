@@ -1,3 +1,7 @@
+/* put the line below after all of the includes!
+#pragma newdecls required
+*/
+
 /* 
 	------------------------------------------------------------------------------------------
 	EntControl::SentryGun
@@ -5,7 +9,7 @@
 	------------------------------------------------------------------------------------------
 */
 
-public InitSentryGun()
+public void InitSentryGun()
 {
 	PrecacheModel("models/Combine_turrets/Floor_turret.mdl");
 	PrecacheSound("weapons/ar2/fire1.wav");
@@ -17,11 +21,11 @@ public InitSentryGun()
 	Spawns the Sentrygun
 	------------------------------------------------------------------------------------------
 */
-public Action:Command_Sentry(client, args)
+public Action Command_Sentry(int client, int args)
 {
 	if (!CanUseCMD(client, gAdminFlagNPC)) return (Plugin_Handled);
 	
-	decl Float:position[3];
+	float position[3];
 	if(GetPlayerEye(client, position))
 		Sentry_Spawn(position, client);
 	else
@@ -36,10 +40,10 @@ public Action:Command_Sentry(client, args)
 	Spawns the Sentrygun
 	------------------------------------------------------------------------------------------
 */
-stock Sentry_Spawn(Float:position[3], owner = 0)
+stock void Sentry_Spawn(float position[3], int owner = 0)
 {
 	// Spawn
-	new entity = CreateEntityByName("prop_physics_override");
+	int entity = CreateEntityByName("prop_physics_override");
 	DispatchKeyValue(entity, "physdamagescale", "0.0");
 	DispatchKeyValue(entity, "model", "models/Combine_turrets/Floor_turret.mdl");
 	DispatchKeyValue(entity, "classname", "npc_sentrygun");
@@ -65,13 +69,15 @@ stock Sentry_Spawn(Float:position[3], owner = 0)
 	SentrySeekThink
 	------------------------------------------------------------------------------------------
 */
-public Action:SentrySeekThink(Handle:timer, any:entityRef)
+public Action SentrySeekThink(Handle timer, any entityRef)
 {
-	new entity = EntRefToEntIndex(entityRef);
+	int entity = EntRefToEntIndex(entityRef);
 	
 	if (entity != INVALID_ENT_REFERENCE && BaseNPC_IsAlive(entity))
 	{
-		new Float:vAngle[3], Float:anglevector[3], Float:vEntPosition[3];
+		float vAngle[3];
+		float anglevector[3];
+		float vEntPosition[3];
 		
 		if (FindFirstTargetInRange(entity, vAngle, vEntPosition) != -1)
 		{
@@ -100,9 +106,9 @@ public Action:SentrySeekThink(Handle:timer, any:entityRef)
 	SentryDamageHook
 	------------------------------------------------------------------------------------------
 */
-public Action:SentryDamageHook(entity, &attacker, &inflictor, &Float:damage, &damagetype)
+public Action SentryDamageHook(int entity, int& attacker, int& inflictor, float& damage, int& damagetype)
 {
-	new health = GetEntProp(entity, Prop_Data, "m_iHealth");
+	int health = GetEntProp(entity, Prop_Data, "m_iHealth");
 	health -= RoundToZero(damage);
 	
 	SetEntProp(entity, Prop_Data, "m_iHealth", health);
@@ -118,13 +124,13 @@ public Action:SentryDamageHook(entity, &attacker, &inflictor, &Float:damage, &da
 	SentryActive
 	------------------------------------------------------------------------------------------
 */
-stock SentryActive(entity)
+stock void SentryActive(int entity)
 {
 	SDKUnhook(entity, SDKHook_OnTakeDamage, SentryDamageHook);
 
 	if(IsValidEntity(entity) && IsValidEdict(entity))
 	{
-		decl Float:vEntPosition[3];
+		float vEntPosition[3];
 		GetEntPropVector(entity, Prop_Send, "m_vecOrigin", vEntPosition);
 
 		RemoveEntity(entity);

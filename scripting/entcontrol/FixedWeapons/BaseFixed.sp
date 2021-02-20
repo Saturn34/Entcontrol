@@ -1,3 +1,7 @@
+/* put the line below after all of the includes!
+#pragma newdecls required
+*/
+
 /* 
 	------------------------------------------------------------------------------------------
 	EntControl::FixedBase
@@ -12,7 +16,7 @@
 #include "FixedWeapons/plasma.sp"
 #include "FixedWeapons/rocket.sp"
 
-public FixedBase_Init()
+public void FixedBase_Init()
 {
 	PrecacheModel("models/props_combine/bunker_gun01.mdl");
 	
@@ -24,9 +28,9 @@ public FixedBase_Init()
 	Fixed_Base_Spawn
 	------------------------------------------------------------------------------------------
 */
-public Fixed_Base_Spawn(client, Function:OnTriggerFunc, Float:vAimPos[3])
+public void Fixed_Base_Spawn(int client, EntityOutput OnTriggerFunc, float vAimPos[3])
 {
-	new gun = CreateEntityByName("prop_dynamic");
+	int gun = CreateEntityByName("prop_dynamic");
 	SetEntityModel(gun, "models/props_combine/bunker_gun01.mdl");
 	DispatchKeyValue(gun, "classname", "weapon_fixedgun");
 	DispatchSpawn(gun);	
@@ -34,7 +38,7 @@ public Fixed_Base_Spawn(client, Function:OnTriggerFunc, Float:vAimPos[3])
 	TeleportEntity(gun, vAimPos, NULL_VECTOR, NULL_VECTOR);
 	
 	// Spawn
-	new trigger = CreateEntityByName("trigger_multiple");
+	int trigger = CreateEntityByName("trigger_multiple");
 	TeleportEntity(trigger, vAimPos, NULL_VECTOR, NULL_VECTOR);
 	if (trigger != -1)
 	{
@@ -42,7 +46,7 @@ public Fixed_Base_Spawn(client, Function:OnTriggerFunc, Float:vAimPos[3])
 		//DispatchKeyValue(trigger, "end", "200 200 100");
 		DispatchKeyValue(trigger, "spawnflags", "1");
 		
-		decl String:entIndex[6];
+		char entIndex[6];
 		IntToString(gun, entIndex, sizeof(entIndex)-1);
 		DispatchKeyValue(trigger, "targetname", entIndex);
 	}
@@ -55,8 +59,8 @@ public Fixed_Base_Spawn(client, Function:OnTriggerFunc, Float:vAimPos[3])
 	// WTF?! xD
 	SetEntityModel(trigger, "models/props_combine/bunker_gun01.mdl");
 
-	new Float:minbounds[3] = {-50.0, -50.0, 0.0};
-	new Float:maxbounds[3] = {50.0, 50.0, 50.0};
+	float minbounds[3] = {-50.0, -50.0, 0.0};
+	float maxbounds[3] = {50.0, 50.0, 50.0};
 	SetEntPropVector(trigger, Prop_Send, "m_vecMins", minbounds);
 	SetEntPropVector(trigger, Prop_Send, "m_vecMaxs", maxbounds);
 
@@ -78,19 +82,19 @@ public Fixed_Base_Spawn(client, Function:OnTriggerFunc, Float:vAimPos[3])
 	Fixed_Base_Think
 	------------------------------------------------------------------------------------------
 */
-public Fixed_Base_Think(gun, client, Function:func)
+public void Fixed_Base_Think(int gun, int client, Function func)
 {
-	new Float:vAngle[3], Float:vOrigin[3], Float:vAimPos[3], Float:vGunPos[3];
+	float vAngle[3], vOrigin[3], vAimPos[3], vGunPos[3];
 
 	GetClientEyePosition(client, vOrigin);
 	GetClientEyeAngles(client, vAngle);
 
-	new Handle:trace = TR_TraceRayFilterEx(vOrigin, vAngle, MASK_VISIBLE, RayType_Infinite, TraceASDF, client);
+	Handle trace = TR_TraceRayFilterEx(vOrigin, vAngle, MASK_VISIBLE, RayType_Infinite, TraceASDF, client);
 
-	if(TR_DidHit(trace))
+	if (TR_DidHit(trace))
 	{
 		TR_GetEndPosition(vAimPos, trace);
-		new target = TR_GetEntityIndex(trace);
+		int target = TR_GetEntityIndex(trace);
 		CloseHandle(trace);
 		
 		GetEntPropVector(gun, Prop_Send, "m_vecOrigin", vGunPos);
@@ -107,7 +111,7 @@ public Fixed_Base_Think(gun, client, Function:func)
 			TE_SetupBeamPoints(vGunPos, vAimPos, gLaser1, 0, 0, 0, 0.25, 1.0, 1.0, 0, 0.0, {255, 0, 0, 255}, 0);
 		TE_SendToAll();
 		
-		new button = GetClientButtons(client);
+		int button = GetClientButtons(client);
 		if (button & IN_ATTACK)
 		{
 			// Tricky xD
@@ -133,9 +137,9 @@ public Fixed_Base_Think(gun, client, Function:func)
 			TE_SetupGlowSprite(vGunPos, gHalo1, 0.1, 0.5, 255);
 			TE_SendToAll();
 
-			new shake = CreateEntityByName("env_shake");
+			int shake = CreateEntityByName("env_shake");
 			
-			if(DispatchSpawn(shake))
+			if (DispatchSpawn(shake))
 			{
 				DispatchKeyValueFloat(shake, "amplitude", 12.0);
 				DispatchKeyValueFloat(shake, "radius", 500.0);
@@ -146,7 +150,7 @@ public Fixed_Base_Think(gun, client, Function:func)
 				
 				TeleportEntity(shake, vGunPos, NULL_VECTOR, NULL_VECTOR);
 
-				RemoveEntity(shake, 0.5);
+				KillEntity(shake, 0.5);
 			}
 			
 			sendfademsg(client, 25, 25, FFADE_OUT, 255, 255, 255, 25);

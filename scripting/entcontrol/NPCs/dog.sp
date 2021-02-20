@@ -1,3 +1,7 @@
+/* put the line below after all of the includes!
+#pragma newdecls required
+*/
+
 /* 
 	------------------------------------------------------------------------------------------
 	EntControl::Dog
@@ -5,7 +9,7 @@
 	------------------------------------------------------------------------------------------
 */
 
-public InitDog()
+public void InitDog()
 {
 	PrecacheModel("models/dog.mdl");
 	
@@ -20,11 +24,11 @@ public InitDog()
 	Command_Dog
 	------------------------------------------------------------------------------------------
 */
-public Action:Command_Dog(client, args)
+public Action Command_Dog(int client, int args)
 {
 	if (!CanUseCMD(client, gAdminFlagNPC)) return (Plugin_Handled);
 	
-	decl Float:position[3];
+	float position[3];
 	if (GetPlayerEye(client, position))
 		Dog_Spawn(position);
 	else
@@ -38,9 +42,9 @@ public Action:Command_Dog(client, args)
 	Dog_Spawn
 	------------------------------------------------------------------------------------------
 */
-public Dog_Spawn(Float:position[3])
+public void Dog_Spawn(float position[3])
 {
-	new monster = BaseNPC_Spawn(position, "models/dog.mdl", Dog_SeekThink, "npc_dog", "idle01");
+	int monster = BaseNPC_Spawn(position, "models/dog.mdl", Dog_SeekThink, "npc_dog", "idle01");
 	
 	SDKHook(monster, SDKHook_OnTakeDamage, Dog_DamageHook);
 	
@@ -54,20 +58,20 @@ public Dog_Spawn(Float:position[3])
 	Dog_Touch
 	------------------------------------------------------------------------------------------
 */
-public Action:Dog_Touch(monster, other)
+public Action Dog_Touch(int monster, int other)
 {
 	if (other)
 	{
-		decl String:tmp[32];
+		char tmp[32];
 		GetEntPropString(monster, Prop_Data, "m_iName", tmp, sizeof(tmp));
-		new monster_tmp = StringToInt(tmp);
+		int monster_tmp = StringToInt(tmp);
 			
-		decl String:targetname[32];
+		char targetname[32];
 		GetEntPropString(monster_tmp, Prop_Data, "m_iName", targetname, sizeof(targetname));
 		
 		if (StrEqual(targetname, ""))
 		{
-			new String:edictname[32];
+			char edictname[32];
 			GetEdictClassname(other, edictname, 32);
 
 			if (StrEqual(edictname, "prop_physics")
@@ -76,7 +80,7 @@ public Action:Dog_Touch(monster, other)
 				/*|| StrEqual(edictname, "player")*/
 				|| StrEqual(edictname, "phys_magnet"))
 			{
-				decl String:entIndex[6];
+				char entIndex[6];
 				IntToString(other, entIndex, sizeof(entIndex)-1);
 				
 				DispatchKeyValue(monster_tmp, "targetname", entIndex);
@@ -101,18 +105,20 @@ public Action:Dog_Touch(monster, other)
 	DogAttackThink
 	------------------------------------------------------------------------------------------
 */
-public Action:Dog_SeekThink(Handle:timer, any:monsterRef)
+public Action Dog_SeekThink(Handle timer, any monsterRef)
 {
-	new monster = EntRefToEntIndex(monsterRef);
+	int monster = EntRefToEntIndex(monsterRef);
 	
 	if (monster != INVALID_ENT_REFERENCE && IsValidEdict(monster) && IsValidEntity(monster))
 	{
-		decl String:tmp[32];
+		char tmp[32];
 		GetEntPropString(monster, Prop_Data, "m_iName", tmp, sizeof(tmp));
-		new monster_tmp = StringToInt(tmp);
+		int monster_tmp = StringToInt(tmp);
 		
-		new target = BaseNPC_GetTarget(monster);
-		decl Float:vClientPosition[3], Float:vEntPosition[3], Float:vAngle[3];
+		int target = BaseNPC_GetTarget(monster);
+		float vClientPosition[3];
+		float vEntPosition[3];
+		float vAngle[3];
 		
 		GetEntPropVector(monster, Prop_Send, "m_vecOrigin", vEntPosition);
 		
@@ -120,13 +126,13 @@ public Action:Dog_SeekThink(Handle:timer, any:monsterRef)
 		{
 			GetClientEyePosition(target, vClientPosition);
 			
-			decl String:targetname[32];
+			char targetname[32];
 			GetEntPropString(monster_tmp, Prop_Data, "m_iName", targetname, sizeof(targetname));
-			new Float:distance = GetVectorDistance(vClientPosition, vEntPosition, false);
+			float distance = GetVectorDistance(vClientPosition, vEntPosition, false);
 			
 			if (!StrEqual(targetname, ""))
 			{
-				new prop = StringToInt(targetname);
+				int prop = StringToInt(targetname);
 				BaseNPC_SetAnimation(monster, "throw", 1.43);
 				AcceptEntityInput(prop, "ClearParent");
 	
@@ -149,14 +155,14 @@ public Action:Dog_SeekThink(Handle:timer, any:monsterRef)
 			}
 			else if (GetRandomInt(0, 4) == 1)
 			{
-				new entity = CreateEntityByName("prop_physics_override");
+				int entity = CreateEntityByName("prop_physics_override");
 				DispatchKeyValue(entity, "model", "models/props_wasteland/rockgranite03b.mdl"); // models/props_wasteland/rockgranite03b.mdl
 				DispatchKeyValue(entity, "physdamagescale", "10000.0");
 				DispatchSpawn(entity);
 				
 				TeleportEntity(entity, vEntPosition, NULL_VECTOR, NULL_VECTOR);
 				
-				decl String:entIndex[6];
+				char entIndex[6];
 				IntToString(entity, entIndex, sizeof(entIndex)-1);
 				
 				DispatchKeyValue(monster_tmp, "targetname", entIndex);
@@ -194,13 +200,13 @@ public Action:Dog_SeekThink(Handle:timer, any:monsterRef)
 	DogIdleThink
 	------------------------------------------------------------------------------------------
 */
-public Action:Dog_IdleThink(Handle:timer, any:monsterRef)
+public Action Dog_IdleThink(Handle timer, any monsterRef)
 {
-	new monster = EntRefToEntIndex(monsterRef);
+	int monster = EntRefToEntIndex(monsterRef);
 	
 	if (monster != INVALID_ENT_REFERENCE && IsValidEntity(monster))
 	{
-		new Float:vEntPosition[3];
+		float vEntPosition[3];
 		GetEntPropVector(monster, Prop_Send, "m_vecOrigin", vEntPosition);
 		
 		BaseNPC_PlaySound(monster, "npc/dog/dog_scared1.wav");
@@ -216,7 +222,7 @@ public Action:Dog_IdleThink(Handle:timer, any:monsterRef)
 	HeadCrabDamageHook
 	------------------------------------------------------------------------------------------
 */
-public Action:Dog_DamageHook(monster, &attacker, &inflictor, &Float:damage, &damagetype)
+public Action Dog_DamageHook(int monster, int& attacker, int& inflictor, float& damage, int& damagetype)
 {
 	if (BaseNPC_Hurt(monster, attacker, RoundToZero(damage), "npc/dog/dog_angry1.wav"))
 	{

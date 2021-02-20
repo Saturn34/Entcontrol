@@ -1,3 +1,7 @@
+/* put the line below after all of the includes!
+#pragma newdecls required
+*/
+
 /* 
 	------------------------------------------------------------------------------------------
 	EntControl::Menu
@@ -6,26 +10,26 @@
 */
 
 // - Menu
-new Handle:gEntControlSpawnMenu;
-new Handle:gEntControlSpawnPropsMenu;
-new Handle:gEntControlSpawnNPCsMenu;
-new Handle:gEntControlSpawnItemsMenu;
-new Handle:gEntControlSpawnWeaponsMenu;
-new Handle:gEntControlRotateMenu;
-new Handle:gEntControlHelperMenu;
-new Handle:gEntControlWeaponMenu;
-new Handle:gEntControlWorldMenu;
+Handle gEntControlSpawnMenu;
+Handle gEntControlSpawnPropsMenu;
+Handle gEntControlSpawnNPCsMenu;
+Handle gEntControlSpawnItemsMenu;
+Handle gEntControlSpawnWeaponsMenu;
+Handle gEntControlRotateMenu;
+Handle gEntControlHelperMenu;
+Handle gEntControlWeaponMenu;
+Handle gEntControlWorldMenu;
 
 // Admin Flags
-new Handle:gAdminFlagMenu;
+Handle gAdminFlagMenu;
 
-public RegMenuCommands()
+public void RegMenuCommands()
 {
 	gAdminFlagMenu = CreateConVar("sm_entcontrol_menu_fl", "z", "The needed Flag to use the Menu");
 	RegConsoleCmd("sm_entcontrol_menu", Command_EntControl_Menu, "EntControl Menu");
 }
 
-public BuildMenu()
+public void BuildMenu()
 {
 	gEntControlSpawnMenu		= BuildEntControlSpawnMenu();
 	gEntControlSpawnPropsMenu	= BuildEntControlSpawnPropsMenu();
@@ -38,7 +42,7 @@ public BuildMenu()
 	gEntControlWorldMenu 		= BuildEntControlWorldMenu();
 }
 
-public FreeMenu()
+public void FreeMenu()
 {
 	if (gEntControlSpawnMenu != INVALID_HANDLE)
 	{
@@ -95,7 +99,7 @@ public FreeMenu()
 	}
 }
 
-stock GenerateMenu_Main(client)
+stock void GenerateMenu_Main(int client)
 {
 	if (GetClientMenu(client))
 	{
@@ -103,7 +107,7 @@ stock GenerateMenu_Main(client)
 		CancelClientMenu(client);
 	}
 	
-	new Handle:entcontrol = CreateMenu(Menu_EC_Main);
+	Handle entcontrol = CreateMenu(Menu_EC_Main);
 
 	if (!ValidSelect(gSelectedEntity[client]))
 		gSelectedEntity[client] = GetObject(client, true);
@@ -111,7 +115,7 @@ stock GenerateMenu_Main(client)
 	// We have to execute IsValidSelect(gSelectedEntity[client]) twice
 	if (ValidSelect(gSelectedEntity[client]))
 	{
-		new selectedEntity = EntRefToEntIndex(gSelectedEntity[client]);
+		int selectedEntity = EntRefToEntIndex(gSelectedEntity[client]);
 		if (selectedEntity == INVALID_ENT_REFERENCE)
 			return;
 
@@ -125,7 +129,7 @@ stock GenerateMenu_Main(client)
 		AddMenuItem(entcontrol, "gEntControlWorldMenu", "World Menu >");
 		
 		// Get Classname
-		decl String:classname[32];
+		char classname[32];
 		GetEdictClassname(selectedEntity, classname, 32);
 		
 		if (strncmp("prop_", classname, 5, false) == 0
@@ -153,11 +157,11 @@ stock GenerateMenu_Main(client)
 	}
 }
 
-public Menu_EC_Main(Handle:entcontrol, MenuAction:action, param1, param2)
+public int Menu_EC_Main(Handle entcontrol, MenuAction action, int param1, int param2)
 {
 	if (action == MenuAction_Select)
 	{
-		new String:info[32];
+		char info[32];
 		GetMenuItem(entcontrol, param2, info, sizeof(info));
 
 		if (StrEqual(info, "gEntControlSpawnMenu"))
@@ -217,16 +221,16 @@ public Menu_EC_Main(Handle:entcontrol, MenuAction:action, param1, param2)
 	}
 }
 
-stock GenerateMenu_About(client)
+stock void GenerateMenu_About(int client)
 {
-	new Handle:entcontrol = CreateMenu(Menu_EC_About);
+	Handle entcontrol = CreateMenu(Menu_EC_About);
 	
 	// Our "Nutte" xD
-	decl String:sBuffer[64];
-	decl String:sClassname[64];
-	decl Float:vBuffer[3];
-	new iBuffer;
-	new ent;
+	char sBuffer[64];
+	char sClassname[64];
+	float vBuffer[3];
+	int iBuffer;
+	int ent;
 	
 	// Get the saved object
 	if (!ValidSelect(gSelectedEntity[client]))
@@ -440,7 +444,7 @@ stock GenerateMenu_About(client)
 		{
 			KvGotoFirstSubKey(kvEnts, false);
 			
-			decl String:sectionName[32];
+			char sectionName[32];
 			do
 			{
 				KvGetSectionName(kvEnts, sectionName, sizeof(sectionName));
@@ -461,10 +465,10 @@ stock GenerateMenu_About(client)
 	DisplayMenu(entcontrol, client, 0);
 }
 
-public Menu_EC_About_AddOutputs(Handle:entcontrol, ent, String:sOutput[32])
+public void Menu_EC_About_AddOutputs(Handle entcontrol, int ent, char sOutput[32])
 {
-	decl String:sBuffer[32];
-	new count = EC_Entity_GetOutputCount(ent, sOutput);
+	char sBuffer[32];
+	int count = EC_Entity_GetOutputCount(ent, sOutput);
 	
 	Format(sBuffer, 32, "->%s(%i)", sOutput, count);
 	AddMenuItem(entcontrol, sBuffer, sBuffer);
@@ -477,7 +481,7 @@ public Menu_EC_About_AddOutputs(Handle:entcontrol, ent, String:sOutput[32])
 		{
 			AddMenuItem(entcontrol, sBuffer, sBuffer);
 			
-			for (new i = 1; i < count; i++)
+			for (int i = 1; i < count; i++)
 			{
 				sBuffer = sOutput;
 				EC_Entity_GetOutputAt(ent, sBuffer, i);
@@ -491,11 +495,11 @@ public Menu_EC_About_AddOutputs(Handle:entcontrol, ent, String:sOutput[32])
 	}
 }
 
-public Menu_EC_About(Handle:entcontrol, MenuAction:action, param1, param2)
+public int Menu_EC_About(Handle entcontrol, MenuAction action, int param1, int param2)
 {
 	if (action == MenuAction_Select)
 	{
-	 	new String:info[64];
+	 	char info[64];
 		GetMenuItem(entcontrol, param2, info, sizeof(info));
 		
 		FakeClientCommand(param1, "say %s", info);
@@ -507,9 +511,9 @@ public Menu_EC_About(Handle:entcontrol, MenuAction:action, param1, param2)
 		CloseHandle(entcontrol);
 }
 
-Handle:BuildEntControlSpawnMenu()
+Handle BuildEntControlSpawnMenu()
 {
-	new Handle:entcontrol = CreateMenu(Menu_EntControl_Spawn);
+	Handle entcontrol = CreateMenu(Menu_EntControl_Spawn);
 	SetMenuTitle(entcontrol, "Spawn Menu:");
 
 	AddMenuItem(entcontrol, "gEntControlSpawnPropsMenu", "Spawn Props >");
@@ -535,7 +539,8 @@ Handle:BuildEntControlSpawnMenu()
 	{
 		if (KvJumpToKey(kv, "Spawns") && KvGotoFirstSubKey(kv, false))
 		{
-			decl String:sectionName[16], String:gameName[16];
+			char sectionName[16];
+			char gameName[16];
 			do
 			{
 				KvGetSectionName(kv, sectionName, sizeof(sectionName));
@@ -558,11 +563,11 @@ Handle:BuildEntControlSpawnMenu()
 	return (entcontrol);
 }
 
-public Menu_EntControl_Spawn(Handle:entcontrol, MenuAction:action, param1, param2)
+public int Menu_EntControl_Spawn(Handle entcontrol, MenuAction action, int param1, int param2)
 {
 	if (action == MenuAction_Select)
 	{
-		new String:info[32];
+		char info[32];
 		GetMenuItem(entcontrol, param2, info, sizeof(info));
 
 		if (StrEqual(info,"gEntControlSpawnPropsMenu"))
@@ -593,7 +598,7 @@ public Menu_EntControl_Spawn(Handle:entcontrol, MenuAction:action, param1, param
 		}
 		else
 		{	
-			new String:cmd[42];
+			char cmd[42];
 			FormatEx(cmd, sizeof(cmd), "sm_entcontrol_spawn %s", info);
 			FakeClientCommandEx(param1, cmd);
 		
@@ -604,9 +609,9 @@ public Menu_EntControl_Spawn(Handle:entcontrol, MenuAction:action, param1, param
 		GenerateMenu_Main(param1);
 }
 
-Handle:BuildEntControlSpawnPropsMenu()
+Handle BuildEntControlSpawnPropsMenu()
 {
-	new Handle:entcontrol = CreateMenu(Menu_EntControl_SpawnProps);
+	Handle entcontrol = CreateMenu(Menu_EntControl_SpawnProps);
 	SetMenuTitle(entcontrol, "Spawn Props:");
 
 	if (KvJumpToKey(kv, "Spawns")  
@@ -614,7 +619,7 @@ Handle:BuildEntControlSpawnPropsMenu()
 		&& KvJumpToKey(kv, "all")
 		&& KvGotoFirstSubKey(kv, false))
 	{
-			decl String:sectionName[16];
+			char sectionName[16];
 			do
 			{
 				KvGetSectionName(kv, sectionName, sizeof(sectionName));
@@ -629,7 +634,7 @@ Handle:BuildEntControlSpawnPropsMenu()
 		&& KvJumpToKey(kv, GameTypeToString())
 		&& KvGotoFirstSubKey(kv, false))
 	{
-		decl String:sectionName[16];
+		char sectionName[16];
 		do
 		{
 			KvGetSectionName(kv, sectionName, sizeof(sectionName));
@@ -645,11 +650,11 @@ Handle:BuildEntControlSpawnPropsMenu()
 	return (entcontrol);
 }
 
-public Menu_EntControl_SpawnProps(Handle:entcontrol, MenuAction:action, param1, param2)
+public int Menu_EntControl_SpawnProps(Handle entcontrol, MenuAction action, int param1, int param2)
 {
 	if (action == MenuAction_Select)
 	{
-		new String:name[40];
+		char name[40];
 		GetMenuItem(entcontrol, param2, name, sizeof(name));
 		
 		FakeClientCommandEx(param1, "sm_entcontrol_spawn_prop %s", name);
@@ -660,9 +665,9 @@ public Menu_EntControl_SpawnProps(Handle:entcontrol, MenuAction:action, param1, 
 		DisplayMenu(gEntControlSpawnMenu, param1, MENU_TIME_FOREVER);
 }
 
-Handle:BuildEntControlSpawnNPCsMenu()
+Handle BuildEntControlSpawnNPCsMenu()
 {
-	new Handle:entcontrol = CreateMenu(Menu_EntControl_SpawnNPCs);
+	Handle entcontrol = CreateMenu(Menu_EntControl_SpawnNPCs);
 	SetMenuTitle(entcontrol, "Spawn NPC:");
 
 	AddMenuItem(entcontrol, "sm_entcontrol_npc_sentry", "Spawn SentryGun");
@@ -690,11 +695,11 @@ Handle:BuildEntControlSpawnNPCsMenu()
 	return (entcontrol);
 }
 
-public Menu_EntControl_SpawnNPCs(Handle:entcontrol, MenuAction:action, param1, param2)
+public int Menu_EntControl_SpawnNPCs(Handle entcontrol, MenuAction action, int param1, int param2)
 {
 	if (action == MenuAction_Select)
 	{
-		new String:cmd[128];
+		char cmd[128];
 		GetMenuItem(entcontrol, param2, cmd, sizeof(cmd));
 
 		FakeClientCommandEx(param1, cmd);
@@ -705,9 +710,9 @@ public Menu_EntControl_SpawnNPCs(Handle:entcontrol, MenuAction:action, param1, p
 		DisplayMenu(gEntControlSpawnMenu, param1, MENU_TIME_FOREVER);
 }
 
-Handle:BuildEntControlSpawnItemsMenu()
+Handle BuildEntControlSpawnItemsMenu()
 {
-	new Handle:entcontrol = CreateMenu(Menu_EntControl_SpawnItems);
+	Handle entcontrol = CreateMenu(Menu_EntControl_SpawnItems);
 	SetMenuTitle(entcontrol, "Spawn Item:");
 
 	if (!KvJumpToKey(kv, "Spawns") 
@@ -720,7 +725,7 @@ Handle:BuildEntControlSpawnItemsMenu()
 	}
 	else
 	{
-		decl String:sectionName[32];
+		char sectionName[32];
 		do
 		{
 			KvGetSectionName(kv, sectionName, sizeof(sectionName));
@@ -737,11 +742,11 @@ Handle:BuildEntControlSpawnItemsMenu()
 	return (entcontrol);
 }
 
-public Menu_EntControl_SpawnItems(Handle:entcontrol, MenuAction:action, param1, param2)
+public int Menu_EntControl_SpawnItems(Handle entcontrol, MenuAction action, int param1, int param2)
 {
 	if (action == MenuAction_Select)
 	{
-		new String:item[128];
+		char item[128];
 		GetMenuItem(entcontrol, param2, item, sizeof(item));
 
 		if (!StrEqual(item, ""))
@@ -754,9 +759,9 @@ public Menu_EntControl_SpawnItems(Handle:entcontrol, MenuAction:action, param1, 
 }
 
 
-Handle:BuildEntControlSpawnWeaponsMenu()
+Handle BuildEntControlSpawnWeaponsMenu()
 {
-	new Handle:entcontrol = CreateMenu(Menu_EntControl_SpawnWeapons);
+	Handle entcontrol = CreateMenu(Menu_EntControl_SpawnWeapons);
 	SetMenuTitle(entcontrol, "Spawn static Weapons:");
 
 	AddMenuItem(entcontrol, "MG", "MG");
@@ -769,11 +774,11 @@ Handle:BuildEntControlSpawnWeaponsMenu()
 	return (entcontrol);
 }
 
-public Menu_EntControl_SpawnWeapons(Handle:entcontrol, MenuAction:action, param1, param2)
+public int Menu_EntControl_SpawnWeapons(Handle entcontrol, MenuAction action, int param1, int param2)
 {
 	if (action == MenuAction_Select)
 	{
-		new String:weapon[128];
+		char weapon[128];
 		GetMenuItem(entcontrol, param2, weapon, sizeof(weapon));
 
 		if (StrEqual(weapon, "MG"))
@@ -789,9 +794,9 @@ public Menu_EntControl_SpawnWeapons(Handle:entcontrol, MenuAction:action, param1
 		DisplayMenu(gEntControlSpawnMenu, param1, MENU_TIME_FOREVER);
 }
 
-Handle:BuildEntControlRotateMenu()
+Handle BuildEntControlRotateMenu()
 {
-	new Handle:entcontrol = CreateMenu(Menu_EntControl_Rotate);
+	Handle entcontrol = CreateMenu(Menu_EntControl_Rotate);
 	SetMenuTitle(entcontrol, "Rotate Menu:");
 
 	// Page 1
@@ -808,11 +813,11 @@ Handle:BuildEntControlRotateMenu()
 	return (entcontrol);
 }
 
-public Menu_EntControl_Rotate(Handle:entcontrol, MenuAction:action, param1, param2)
+public int Menu_EntControl_Rotate(Handle entcontrol, MenuAction action, int param1, int param2)
 {
 	if (action == MenuAction_Select)
 	{
-		new String:cmd[128];
+		char cmd[128];
 		GetMenuItem(entcontrol, param2, cmd, sizeof(cmd));
 
 		FakeClientCommandEx(param1, cmd);
@@ -823,9 +828,9 @@ public Menu_EntControl_Rotate(Handle:entcontrol, MenuAction:action, param1, para
 		GenerateMenu_Main(param1);
 }
 
-Handle:BuildEntControlHelperMenu()
+Handle BuildEntControlHelperMenu()
 {
-	new Handle:entcontrol = CreateMenu(Menu_EntControl_Helper);
+	Handle entcontrol = CreateMenu(Menu_EntControl_Helper);
 	SetMenuTitle(entcontrol, "Helper Menu:");
 
 	// Page 1
@@ -847,11 +852,11 @@ Handle:BuildEntControlHelperMenu()
 	return (entcontrol);
 }
 
-public Menu_EntControl_Helper(Handle:entcontrol, MenuAction:action, param1, param2)
+public int Menu_EntControl_Helper(Handle entcontrol, MenuAction action, int param1, int param2)
 {
 	if (action == MenuAction_Select)
 	{
-		new String:cmd[128];
+		char cmd[128];
 		GetMenuItem(entcontrol, param2, cmd, sizeof(cmd));
 
 		FakeClientCommandEx(param1, cmd);
@@ -862,9 +867,9 @@ public Menu_EntControl_Helper(Handle:entcontrol, MenuAction:action, param1, para
 		GenerateMenu_Main(param1);
 }
 
-Handle:BuildEntControlWeaponMenu()
+Handle BuildEntControlWeaponMenu()
 {
-	new Handle:entcontrol = CreateMenu(Menu_EntControl_Weapon);
+	Handle entcontrol = CreateMenu(Menu_EntControl_Weapon);
 	SetMenuTitle(entcontrol, "Weapons Menu:");
 
 	// Page 1
@@ -884,11 +889,11 @@ Handle:BuildEntControlWeaponMenu()
 	return (entcontrol);
 }
 
-public Menu_EntControl_Weapon(Handle:entcontrol, MenuAction:action, param1, param2)
+public int Menu_EntControl_Weapon(Handle entcontrol, MenuAction action, int param1, int param2)
 {
 	if (action == MenuAction_Select)
 	{
-		new String:cmd[128];
+		char cmd[128];
 		GetMenuItem(entcontrol, param2, cmd, sizeof(cmd));
 
 		FakeClientCommandEx(param1, cmd);
@@ -899,7 +904,7 @@ public Menu_EntControl_Weapon(Handle:entcontrol, MenuAction:action, param1, para
 		GenerateMenu_Main(param1);
 }
 
-public Action:Command_EntControl_Menu(client, args)
+public Action Command_EntControl_Menu(int client, int args)
 {
 	if (!CanUseCMD(client, gAdminFlagMenu)) return (Plugin_Handled);
 
@@ -915,11 +920,11 @@ public Action:Command_EntControl_Menu(client, args)
 	EDIT MENU
 	------------------------------------------------------------------------------------------
 */
-public Menu_Edit(Handle:entcontrol, MenuAction:action, param1, param2)
+public int Menu_Edit(Handle entcontrol, MenuAction action, int param1, int param2)
 {
 	if (action == MenuAction_Select && ValidSelect(gSelectedEntity[param1]))
 	{
-		new String:info[32];
+		char info[32];
 		GetMenuItem(entcontrol, param2, info, sizeof(info));
 		
 		if (StrEqual(info, "ecFreeze"))
@@ -973,7 +978,7 @@ public Menu_Edit(Handle:entcontrol, MenuAction:action, param1, param2)
 			SetEntDataEnt2(gSelectedEntity[param1], gLeaderOffset, param1);
 		else if (StrEqual(info, "ecParent"))
 		{
-			new ent = GetObject(param1, false);
+			int ent = GetObject(param1, false);
 			if (IsValidEdict(ent) && IsValidEntity(ent))
 			{
 				SetVariantString("!activator");
@@ -994,7 +999,7 @@ public Menu_Edit(Handle:entcontrol, MenuAction:action, param1, param2)
 		GenerateMenu_Main(param1);
 }
 
-stock GenerateMenu_Edit(client, item = 0)
+stock void GenerateMenu_Edit(int client, int item = 0)
 {
 	if (!ValidSelect(gSelectedEntity[client]))
 	{
@@ -1008,10 +1013,10 @@ stock GenerateMenu_Edit(client, item = 0)
 		}
 	}
 	
-	decl String:edictname[64];
+	char edictname[64];
 	GetEdictClassname(gSelectedEntity[client], edictname, 64);
 	
-	new Handle:entcontrol = CreateMenu(Menu_Edit);
+	Handle entcontrol = CreateMenu(Menu_Edit);
 	SetMenuTitle(entcontrol, edictname);
 	
 	AddMenuItem(entcontrol, "", "--- INPUT ---");
@@ -1020,7 +1025,7 @@ stock GenerateMenu_Edit(client, item = 0)
 	{
 		KvGotoFirstSubKey(kvEnts, false);
 		
-		decl String:sectionName[32];
+		char sectionName[32];
 		do
 		{
 			KvGetSectionName(kvEnts, sectionName, sizeof(sectionName));
@@ -1071,11 +1076,11 @@ stock GenerateMenu_Edit(client, item = 0)
 	MOVE MENU
 	------------------------------------------------------------------------------------------
 */
-public Menu_Move(Handle:entcontrol, MenuAction:action, param1, param2)
+public int Menu_Move(Handle entcontrol, MenuAction action, int param1, int param2)
 {
 	if (action == MenuAction_Select && ValidSelect(gSelectedEntity[param1]))
 	{
-		new String:info[32];
+		char info[32];
 		GetMenuItem(entcontrol, param2, info, sizeof(info));
 		
 		if (StrEqual(info, "ecTeleport"))
@@ -1091,7 +1096,7 @@ public Menu_Move(Handle:entcontrol, MenuAction:action, param1, param2)
 		GenerateMenu_Main(param1);
 }
 
-stock GenerateMenu_Move(client)
+stock void GenerateMenu_Move(int client)
 {
 	if (!ValidSelect(gSelectedEntity[client]))
 	{
@@ -1099,12 +1104,12 @@ stock GenerateMenu_Move(client)
 		return;
 	}
 	
-	new Handle:entcontrol = CreateMenu(Menu_Move);
+	Handle entcontrol = CreateMenu(Menu_Move);
 	SetMenuTitle(entcontrol, "Move Entity:");
 	
 	if (RoundToZero(gSavedPos[client][0]))
 	{
-		decl String:sBuffer[32];
+		char sBuffer[32];
 		Format(sBuffer, 32, "--> (%i %i %i)", RoundToZero(gSavedPos[client][0]), RoundToZero(gSavedPos[client][1]), RoundToZero(gSavedPos[client][2]));
 		AddMenuItem(entcontrol, "ecTeleport", "Teleport to the saved Position");
 		AddMenuItem(entcontrol, "ecTeleport", sBuffer);
@@ -1119,9 +1124,9 @@ stock GenerateMenu_Move(client)
 	WORLD MENU
 	------------------------------------------------------------------------------------------
 */
-Handle:BuildEntControlWorldMenu()
+Handle BuildEntControlWorldMenu()
 {
-	new Handle:entcontrol = CreateMenu(Menu_EntControl_World);
+	Handle entcontrol = CreateMenu(Menu_EntControl_World);
 	SetMenuTitle(entcontrol, "World Menu:");
 
 	// Page 1
@@ -1140,11 +1145,11 @@ Handle:BuildEntControlWorldMenu()
 	return (entcontrol);
 }
 
-public Menu_EntControl_World(Handle:entcontrol, MenuAction:action, param1, param2)
+public int Menu_EntControl_World(Handle entcontrol, MenuAction action, int param1, int param2)
 {
 	if (action == MenuAction_Select)
 	{
-		new String:cmd[128];
+		char cmd[128];
 		GetMenuItem(entcontrol, param2, cmd, sizeof(cmd));
 
 		if (StrEqual(cmd, "0Light"))

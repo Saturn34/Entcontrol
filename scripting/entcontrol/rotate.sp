@@ -1,3 +1,7 @@
+/* put the line below after all of the includes!
+#pragma newdecls required
+*/
+
 /* 
 	------------------------------------------------------------------------------------------
 	EntControl::Rotate
@@ -6,9 +10,9 @@
 */
 
 // Admin Flags
-new Handle:gAdminFlagRotate;
+Handle gAdminFlagRotate;
 
-public RegRotateCommands()
+public void RegRotateCommands()
 {
 	gAdminFlagRotate = CreateConVar("sm_entcontrol_rotate_fl", "z", "The needed Flag to rotate an object");
 	RegConsoleCmd("sm_entcontrol_rotate", Command_Rotate, "Rotate Object");
@@ -20,16 +24,17 @@ public RegRotateCommands()
 	Rotate the entity
 	------------------------------------------------------------------------------------------
 */
-public Action:Command_Rotate(client, args)
+public Action Command_Rotate(int client, int args)
 {  
 	if (!CanUseCMD(client, gAdminFlagRotate)) return (Plugin_Handled);
 
-	new obj = gSelectedEntity[client];
+	int obj = gSelectedEntity[client];
 	if (obj != -1)
 	{
-		decl String:arg1[12], String:arg2[12];
-		decl Float:angle; // Should I use INT instead ? hmmm ...
-		decl Float:vel[3];
+		char arg1[12];
+		char arg2[12];
+		float angle; // Should I use INT instead ? hmmm ...
+		float vel[3];
 
 		if (args < 2)
 		{

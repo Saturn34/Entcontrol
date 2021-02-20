@@ -1,3 +1,7 @@
+/* put the line below after all of the includes!
+#pragma newdecls required
+*/
+
 /* 
 	------------------------------------------------------------------------------------------
 	EntControl::WebInterface
@@ -5,7 +9,7 @@
 	------------------------------------------------------------------------------------------
 */
 
-public RegWebinterfaceCommands()
+public void RegWebinterfaceCommands()
 {
 	RegConsoleCmd("sm_entcontrol_webinterface", Command_Open_Webinterface, "Open the webinterface");
 }
@@ -17,11 +21,11 @@ public RegWebinterfaceCommands()
 	This way is not the best way, but it´s working for most of cases.
 	------------------------------------------------------------------------------------------
 */
-public Action:Command_Open_Webinterface(client, args)
+public Action Command_Open_Webinterface(int client, int args)
 {
 	if (client)
 	{
-		new String:IP[128];
+		char IP[128];
 		
 		EC_Web_GetIP(IP);
 		
@@ -30,13 +34,13 @@ public Action:Command_Open_Webinterface(client, args)
 			GetConVarString(FindConVar("ip"), IP, sizeof(IP));
 			if (StrEqual(IP, "localhost"))
 			{
-				new hostip = GetConVarInt(FindConVar("hostip"));
+				int hostip = GetConVarInt(FindConVar("hostip"));
 				if (hostip > 0)
 					Format(IP, sizeof(IP), "%i.%i.%i.%i", hostip >>> 24 & 255, hostip >>> 16 & 255, hostip >>> 8 & 255, hostip & 255);
 			}
 		}
 
-		new port = EC_Web_GetPort();
+		int port = EC_Web_GetPort();
 		if (port == 0)
 		{
 			CPrintToChat(client, "{red}Webserver-Module is not running!");
@@ -52,16 +56,16 @@ public Action:Command_Open_Webinterface(client, args)
 	return (Plugin_Handled);
 }
 
-public HTML_DrawEntityList(String:result[], maxresultlength)
+public void HTML_DrawEntityList(char[] result, int maxresultlength)
 {
-	new count = GetEntityCount();
-	for (new i=0; i<=count; i++)
+	int count = GetEntityCount();
+	for (int i=0; i<=count; i++)
 	{
 		if (IsValidEntity(i))
 		{
-			new ref = EntIndexToEntRef(i);
+			int ref = EntIndexToEntRef(i);
 			
-			decl String:classname[64];
+			char classname[64];
 			if (GetEntityClassname(ref, classname, sizeof(classname)))
 			{
 				Format(result, maxresultlength, "%s<tr><td><a href=\"showentityinfo.html?ref=%d\">%d</a></td><td>%s</td></tr>", result, ref, i, classname);
@@ -70,10 +74,10 @@ public HTML_DrawEntityList(String:result[], maxresultlength)
 	}
 }
 
-public HTML_DrawEntityInputs(entityRef, String:result[], maxresultlength)
+public void HTML_DrawEntityInputs(int entityRef, char[] result, int maxresultlength)
 {
-	new entity = EntRefToEntIndex(entityRef);
-	decl String:classname[32];
+	int entity = EntRefToEntIndex(entityRef);
+	char classname[32];
 	if (IsValidEntity(entity))
 	{
 		GetEntityClassname(entity, classname, sizeof(classname));
@@ -82,7 +86,7 @@ public HTML_DrawEntityInputs(entityRef, String:result[], maxresultlength)
 		{
 			KvGotoFirstSubKey(kvEnts, false);
 			
-			decl String:sectionName[32];
+			char sectionName[32];
 			do
 			{
 				KvGetSectionName(kvEnts, sectionName, sizeof(sectionName));
@@ -98,23 +102,23 @@ public HTML_DrawEntityInputs(entityRef, String:result[], maxresultlength)
 	}
 }
 
-public HTML_DrawEntityOutputs(entity, String:result[], maxresultlength)
+public void HTML_DrawEntityOutputs(int entity, char[] result, int maxresultlength)
 {
 	entity = EntRefToEntIndex(entity);
 	if (IsValidEntity(entity))
 	{
-		decl String:classname[32];
+		char classname[32];
 		if (GetEntityClassname(entity, classname, sizeof(classname)) && KvJumpToKey(kvEnts, classname) && KvJumpToKey(kvEnts, "output"))
 		{
 			KvGotoFirstSubKey(kvEnts, false);
 			
-			decl String:sectionName[32];
+			char sectionName[32];
 			do
 			{
 				KvGetSectionName(kvEnts, sectionName, sizeof(sectionName));
 
-				decl String:sBuffer[32];
-				new count = EC_Entity_GetOutputCount(entity, sectionName);
+				char sBuffer[32];
+				int count = EC_Entity_GetOutputCount(entity, sectionName);
 				
 				Format(result, maxresultlength, "%s%s(%i)<br/>", result, sectionName, count);
 				
@@ -126,7 +130,7 @@ public HTML_DrawEntityOutputs(entity, String:result[], maxresultlength)
 					{
 						Format(result, maxresultlength, "%s->%s<br/>", result, sBuffer);
 						
-						for (new i = 1; i < count; i++)
+						for (int i = 1; i < count; i++)
 						{
 							sBuffer = sectionName;
 							EC_Entity_GetOutputAt(entity, sBuffer, i);
@@ -150,24 +154,24 @@ public HTML_DrawEntityOutputs(entity, String:result[], maxresultlength)
 	}
 }
 
-public Action:EC_OnWebserverCallFunction(const userID, const String:function[], const String:arg[], String:result[])
+public Action EC_OnWebserverCallFunction(const int userID, const char[] func, const char[] arg, char[] result)
 {
-	new Float:vector3d[3];
-	decl String:container3[3][128];
+	float vector3d[3];
+	char container3[3][128];
 
-	//PrintToServer("Entcontrol->Call to function %s(%s)\n", function, arg);
+	//PrintToServer("Entcontrol->Call to function %s(%s)\n", func, arg);
 	
 	strcopy(result, EC_MAXHTTPRESULT, "");
 	
-	if (StrEqual(function, "DrawEntityList"))
+	if (StrEqual(func, "DrawEntityList"))
 	{
 		HTML_DrawEntityList(result, EC_MAXHTTPRESULT);
 	}
-	else if (StrEqual(function, "GetEntPropString"))
+	else if (StrEqual(func, "GetEntPropString"))
 	{
 		ExplodeString(arg, ",", container3, sizeof(container3), sizeof(container3[]));
 		
-		new entity = StringToInt(container3[0]);
+		int entity = StringToInt(container3[0]);
 		if (IsValidEntity(entity))
 		{
 			if (StrEqual(container3[1], "Prop_Data"))
@@ -176,11 +180,11 @@ public Action:EC_OnWebserverCallFunction(const userID, const String:function[], 
 				GetEntPropString(entity, Prop_Send, container3[2], result, EC_MAXHTTPRESULT);
 		}
 	}
-	else if (StrEqual(function, "GetEntPropVector"))
+	else if (StrEqual(func, "GetEntPropVector"))
 	{
 		ExplodeString(arg, ",", container3, sizeof(container3), sizeof(container3[]));
 		
-		new entity = StringToInt(container3[0]);
+		int entity = StringToInt(container3[0]);
 		if (IsValidEntity(entity))
 		{
 			if (StrEqual(container3[1], "Prop_Data"))
@@ -191,11 +195,11 @@ public Action:EC_OnWebserverCallFunction(const userID, const String:function[], 
 			Format(result, EC_MAXHTTPRESULT, "%f %f %f", vector3d[0], vector3d[1], vector3d[2]);
 		}
 	}
-	else if (StrEqual(function, "GetEntProp"))
+	else if (StrEqual(func, "GetEntProp"))
 	{
 		ExplodeString(arg, ",", container3, sizeof(container3), sizeof(container3[]));
 		
-		new entity = StringToInt(container3[0]);
+		int entity = StringToInt(container3[0]);
 		if (IsValidEntity(entity))
 		{
 			if (StrEqual(container3[1], "Prop_Data"))
@@ -204,9 +208,9 @@ public Action:EC_OnWebserverCallFunction(const userID, const String:function[], 
 				Format(result, EC_MAXHTTPRESULT, "%d", GetEntProp(entity, Prop_Send, container3[2]));
 		}
 	}
-	else if (StrEqual(function, "GetEntityMoveType"))
+	else if (StrEqual(func, "GetEntityMoveType"))
 	{
-		new entity = StringToInt(arg);
+		int entity = StringToInt(arg);
 		if (IsValidEntity(entity))
 		{
 			switch (GetEntityMoveType(entity))
@@ -242,12 +246,12 @@ public Action:EC_OnWebserverCallFunction(const userID, const String:function[], 
 			}
 		}
 	}
-	else if (StrEqual(function, "GetEntityFlags"))
+	else if (StrEqual(func, "GetEntityFlags"))
 	{
-		new entity = StringToInt(arg);
+		int entity = StringToInt(arg);
 		if (IsValidEntity(entity))
 		{
-			new flags = GetEntityFlags(entity);
+			int flags = GetEntityFlags(entity);
 			
 			if (flags)
 			{
@@ -318,24 +322,24 @@ public Action:EC_OnWebserverCallFunction(const userID, const String:function[], 
 			}
 		}
 	}
-	else if (StrEqual(function, "GetEntityInputs"))
+	else if (StrEqual(func, "GetEntityInputs"))
 	{
 		HTML_DrawEntityInputs(StringToInt(arg), result, EC_MAXHTTPRESULT);
 	}
-	else if (StrEqual(function, "GetEntityOutputs"))
+	else if (StrEqual(func, "GetEntityOutputs"))
 	{
 		HTML_DrawEntityOutputs(StringToInt(arg), result, EC_MAXHTTPRESULT);
 	}
-	else if (StrEqual(function, "ModifyEntity"))
+	else if (StrEqual(func, "ModifyEntity"))
 	{
-		decl String:containerModEnt[2][32];
+		char containerModEnt[2][32];
 		ExplodeString(arg, ",", containerModEnt, sizeof(containerModEnt), sizeof(containerModEnt[]));
 		
-		new client = GetClientOfUserId(userID);
-		new entity = EntRefToEntIndex(StringToInt(containerModEnt[0]));
+		int client = GetClientOfUserId(userID);
+		int entity = EntRefToEntIndex(StringToInt(containerModEnt[0]));
 		if (IsValidEntity(entity))
 		{
-			decl String:modFunc[32];
+			char modFunc[32];
 			strcopy(modFunc, 32, containerModEnt[1]);
 			
 			if (StrEqual(modFunc, "Freeze"))

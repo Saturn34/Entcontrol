@@ -1,3 +1,7 @@
+/* put the line below after all of the includes!
+#pragma newdecls required
+*/
+
 /* 
 	------------------------------------------------------------------------------------------
 	EntControl::AntLion
@@ -5,7 +9,7 @@
 	------------------------------------------------------------------------------------------
 */
 
-public InitAntlion()
+public void InitAntlion()
 {
 	PrecacheModel("models/antlion.mdl");
 	PrecacheSound("npc/antlion/attack_double3.wav");
@@ -18,11 +22,11 @@ public InitAntlion()
 	Command_AntLion
 	------------------------------------------------------------------------------------------
 */
-public Action:Command_AntLion(client, args)
+public Action Command_AntLion(int client, int args)
 {
 	if (!CanUseCMD(client, gAdminFlagNPC)) return (Plugin_Handled);
 	
-	decl Float:vPosition[3];
+	float vPosition[3];
 	if(GetPlayerEye(client, vPosition))
 		AntLion_Spawn(vPosition);
 	else
@@ -36,10 +40,10 @@ public Action:Command_AntLion(client, args)
 	AntLion_Spawn
 	------------------------------------------------------------------------------------------
 */
-public AntLion_Spawn(Float:vPosition[3])
+public void AntLion_Spawn(float vPosition[3])
 {
 	// Spawn
-	new monster = BaseNPC_Spawn(vPosition, "models/antlion.mdl", AntLion_SeekThink, "npc_antlion");
+	int monster = BaseNPC_Spawn(vPosition, "models/antlion.mdl", AntLion_SeekThink, "npc_antlion");
 
 	SDKHook(monster, SDKHook_OnTakeDamage, AntLion_DamageHook);
 }
@@ -49,17 +53,18 @@ public AntLion_Spawn(Float:vPosition[3])
 	AntLion_SeekThink
 	------------------------------------------------------------------------------------------
 */
-public Action:AntLion_SeekThink(Handle:timer, any:monsterRef)
+public Action AntLion_SeekThink(Handle timer, any monsterRef)
 {
-	new monster = EntRefToEntIndex(monsterRef);
+	int monster = EntRefToEntIndex(monsterRef);
 	
 	if (monster != INVALID_ENT_REFERENCE && BaseNPC_IsAlive(monster))
 	{
-		new target = BaseNPC_GetTarget(monster);
+		int target = BaseNPC_GetTarget(monster);
 		
 		if (target > 0)
 		{
-			new Float:vClientPosition[3], Float:vEntPosition[3];
+			float vClientPosition[3];
+			float vEntPosition[3];
 			GetClientEyePosition(target, vClientPosition);
 			GetEntPropVector(monster, Prop_Send, "m_vecOrigin", vEntPosition);
 	
@@ -100,7 +105,7 @@ public Action:AntLion_SeekThink(Handle:timer, any:monsterRef)
 	AntLion_DamageHook
 	------------------------------------------------------------------------------------------
 */
-public Action:AntLion_DamageHook(monster, &attacker, &inflictor, &Float:damage, &damagetype)
+public Action AntLion_DamageHook(int monster, int& attacker, int& inflictor, float& damage, int& damagetype)
 {
 	if (BaseNPC_Hurt(monster, attacker, RoundToZero(damage), "npc/antlion/attack_double3.wav"))
 		SDKUnhook(monster, SDKHook_OnTakeDamage, AntLion_DamageHook);

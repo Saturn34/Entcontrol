@@ -1,3 +1,7 @@
+/* put the line below after all of the includes!
+#pragma newdecls required
+*/
+
 /* 
 	------------------------------------------------------------------------------------------
 	EntControl::Zombie
@@ -5,7 +9,7 @@
 	------------------------------------------------------------------------------------------
 */
 
-public InitZombie()
+public void InitZombie()
 {
 	PrecacheModel("models/Zombie/Classic.mdl");
 	PrecacheSound("npc/zombie/zombie_die1.wav");
@@ -15,14 +19,14 @@ public InitZombie()
 	PrecacheSound("npc/zombie/foot2.wav");
 	PrecacheSound("npc/zombie/foot3.wav");
 	
-	decl String:sound[48];
-	for (new i = 1; i <= 14; i++)
+	char sound[48];
+	for (int i = 1; i <= 14; i++)
 	{
 		Format(sound, sizeof(sound), "npc/zombie/zombie_voice_idle%i.wav", i);
 		PrecacheSound(sound);
 	}
 	
-	for (new i = 1; i <= 6; i++)
+	for (int i = 1; i <= 6; i++)
 	{
 		Format(sound, sizeof(sound), "npc/zombie/zombie_pain%i.wav", i);
 		PrecacheSound(sound);
@@ -34,11 +38,11 @@ public InitZombie()
 	Command_Zombie
 	------------------------------------------------------------------------------------------
 */
-public Action:Command_Zombie(client, args)
+public Action Command_Zombie(int client, int args)
 {
 	if (!CanUseCMD(client, gAdminFlagNPC)) return (Plugin_Handled);
 	
-	new Float:position[3];
+	float position[3];
     	
 	if(GetPlayerEye(client, position))
 		Zombie_Spawn(position);
@@ -53,10 +57,10 @@ public Action:Command_Zombie(client, args)
 	Zombie_Spawn
 	------------------------------------------------------------------------------------------
 */
-public Zombie_Spawn(Float:position[3])
+public void Zombie_Spawn(float position[3])
 {
 	// Spawn
-	new monster = BaseNPC_Spawn(position, "models/Zombie/Classic.mdl", ZombieThink, "npc_zombie", "Idle01");
+	int monster = BaseNPC_Spawn(position, "models/Zombie/Classic.mdl", ZombieThink, "npc_zombie", "Idle01");
 	
 	SDKHook(monster, SDKHook_OnTakeDamage, ZombieDamageHook);
 	
@@ -68,27 +72,28 @@ public Zombie_Spawn(Float:position[3])
 	ZombieAttackThink
 	------------------------------------------------------------------------------------------
 */
-public Action:ZombieThink(Handle:timer, any:monsterRef)
+public Action ZombieThink(Handle timer, any monsterRef)
 {
 	#if defined DEBUG
 		LogMessage("ZombieThink()::START");
 	#endif
 	
-	new monster = EntRefToEntIndex(monsterRef);
+	int monster = EntRefToEntIndex(monsterRef);
 	if (monster != INVALID_ENT_REFERENCE && BaseNPC_IsAlive(monster))
 	{
-		new target = BaseNPC_GetTarget(monster);
-		decl Float:vClientPosition[3], Float:vEntPosition[3];
+		int target = BaseNPC_GetTarget(monster);
+		float vClientPosition[3];
+		float vEntPosition[3];
 		
 		GetEntPropVector(monster, Prop_Send, "m_vecOrigin", vEntPosition);
 		
 		if (target > 0)
 		{
 			GetClientEyePosition(target, vClientPosition);
-			new Float:distance = GetVectorDistance(vClientPosition, vEntPosition, false);
+			float distance = GetVectorDistance(vClientPosition, vEntPosition, false);
 			if ((distance < 130.0) && BaseNPC_CanSeeEachOther(monster, target))
 			{
-				new Float:punchangle[3];
+				float punchangle[3];
 				
 				BaseNPC_SetAnimationTime(monster);
 				switch (GetRandomInt(0, 5))
@@ -209,19 +214,19 @@ public Action:ZombieThink(Handle:timer, any:monsterRef)
 	ZombieIdleThink
 	------------------------------------------------------------------------------------------
 */
-public Action:ZombieIdleThink(Handle:timer, any:monsterRef)
+public Action ZombieIdleThink(Handle timer, any monsterRef)
 {	
 	#if defined DEBUG
 		LogMessage("ZombieIdleThink()::START");
 	#endif
 	
-	new monster = EntRefToEntIndex(monsterRef);
+	int monster = EntRefToEntIndex(monsterRef);
 	if (monster != INVALID_ENT_REFERENCE && notBetweenRounds && BaseNPC_IsAlive(monster))
 	{
-		decl Float:vEntPosition[3];
+		float vEntPosition[3];
 		GetEntPropVector(monster, Prop_Send, "m_vecOrigin", vEntPosition);
 
-		decl String:soundfile[48];
+		char soundfile[48];
 		Format(soundfile, sizeof(soundfile), "npc/zombie/zombie_voice_idle%i.wav", GetRandomInt(1, 14));
 
 		BaseNPC_PlaySound(monster, soundfile);
@@ -247,11 +252,11 @@ public Action:ZombieIdleThink(Handle:timer, any:monsterRef)
 	ZombieDamageHook
 	------------------------------------------------------------------------------------------
 */
-public Action:ZombieDamageHook(monster, &attacker, &inflictor, &Float:damage, &damagetype)
+public Action ZombieDamageHook(int monster, int& attacker, int& inflictor, float& damage, int& damagetype)
 {
 	BaseNPC_SetAnimation(monster, "physflinch1");
 	
-	decl String:soundfile[32];
+	char soundfile[32];
 	Format(soundfile, sizeof(soundfile), "npc/zombie/zombie_pain%i.wav", GetRandomInt(1, 6));
 	
 	if (BaseNPC_Hurt(monster, attacker, RoundToZero(damage), soundfile))

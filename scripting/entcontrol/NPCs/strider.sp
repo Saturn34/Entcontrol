@@ -1,3 +1,7 @@
+/* put the line below after all of the includes!
+#pragma newdecls required
+*/
+
 /* 
 	------------------------------------------------------------------------------------------
 	EntControl::Strider
@@ -5,7 +9,7 @@
 	------------------------------------------------------------------------------------------
 */
 
-public InitStrider()
+public void InitStrider()
 {
 	PrecacheModel("models/Combine_Strider.mdl");
 }
@@ -15,11 +19,11 @@ public InitStrider()
 	Command_Strider
 	------------------------------------------------------------------------------------------
 */
-public Action:Command_Strider(client, args)
+public Action Command_Strider(int client, int args)
 {
 	if (!CanUseCMD(client, gAdminFlagNPC)) return (Plugin_Handled);
 	
-	decl Float:position[3];
+	float position[3];
     	
 	if(GetPlayerEye(client, position))
 		Strider_Spawn(position);
@@ -34,10 +38,10 @@ public Action:Command_Strider(client, args)
 	Strider_Spawn
 	------------------------------------------------------------------------------------------
 */
-public Strider_Spawn(Float:position[3])
+public void Strider_Spawn(float position[3])
 {
 	// Spawn
-	new monster = BaseNPC_Spawn(position, "models/Combine_Strider.mdl", StriderThink, "npc_strider", "default");
+	int monster = BaseNPC_Spawn(position, "models/Combine_Strider.mdl", StriderThink, "npc_strider", "default");
 	
 	SDKHook(monster, SDKHook_OnTakeDamage, StriderDamageHook);
 	//MakeDamage(fakeClient, target, damage, DMG_ACID, 1.0, NULL_FLOAT_VECTOR);
@@ -49,20 +53,21 @@ public Strider_Spawn(Float:position[3])
 	StriderAttackThink
 	------------------------------------------------------------------------------------------
 */
-public Action:StriderThink(Handle:timer, any:monsterRef)
+public Action StriderThink(Handle timer, any monsterRef)
 {
-	new monster = EntRefToEntIndex(monsterRef);
+	int monster = EntRefToEntIndex(monsterRef);
 	
 	if (monster != INVALID_ENT_REFERENCE && IsValidEdict(monster) && IsValidEntity(monster))
 	{
-		new Float:vEntPosition[3], Float:angles[3];
+		float vEntPosition[3];
+		float angles[3];
 		GetEntPropVector(monster, Prop_Send, "m_vecOrigin", vEntPosition);
 		
 		// Bottom
 		angles[0] = 90.0;
 		angles[1] = 0.0;
 		angles[2] = 0.0;
-		new Handle:traceBottom = TR_TraceRayFilterEx(vEntPosition, angles, MASK_SHOT, RayType_Infinite, TraceEntityFilterWall);
+		Handle traceBottom = TR_TraceRayFilterEx(vEntPosition, angles, MASK_SHOT, RayType_Infinite, TraceEntityFilterWall);
 
 		if(TR_DidHit(traceBottom))
 		{
@@ -84,9 +89,9 @@ public Action:StriderThink(Handle:timer, any:monsterRef)
 	StriderDamageHook
 	------------------------------------------------------------------------------------------
 */
-public Action:StriderDamageHook(monster, &attacker, &inflictor, &Float:damage, &damagetype)
+public Action StriderDamageHook(int monster, int& attacker, int& inflictor, float& damage, int& damagetype)
 {
-	decl String:soundfile[32];
+	char soundfile[32];
 	Format(soundfile, sizeof(soundfile), "npc/strider/strider_pain%i.wav", GetRandomInt(1, 6));
 	
 	if (BaseNPC_Hurt(monster, attacker, RoundToZero(damage), soundfile))

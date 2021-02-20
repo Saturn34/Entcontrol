@@ -1,3 +1,7 @@
+/* put the line below after all of the includes!
+#pragma newdecls required
+*/
+
 /* 
 	------------------------------------------------------------------------------------------
 	EntControl::Soldier
@@ -5,7 +9,7 @@
 	------------------------------------------------------------------------------------------
 */
 
-public InitSoldier()
+public void InitSoldier()
 {
 	PrecacheModel("models/combine_soldier.mdl");
 	PrecacheModel("models/weapons/w_shotgun.mdl");
@@ -21,11 +25,11 @@ public InitSoldier()
 	Command_Soldier
 	------------------------------------------------------------------------------------------
 */
-public Action:Command_Soldier(client, args)
+public Action Command_Soldier(int client, int args)
 {
 	if (!CanUseCMD(client, gAdminFlagNPC)) return (Plugin_Handled);
 	
-	decl Float:position[3];
+	float position[3];
     	
 	if(GetPlayerEye(client, position))
 		Soldier_Spawn(position);
@@ -40,27 +44,27 @@ public Action:Command_Soldier(client, args)
 	Soldier_Spawn
 	------------------------------------------------------------------------------------------
 */
-public Action:Soldier_Spawn(Float:position[3])
+public Action Soldier_Spawn(float position[3])
 {
 	// Spawn
-	new monster = BaseNPC_Spawn(position, "models/combine_soldier.mdl", SoldierSeekThink, "npc_soldier", "CrouchIdle");
+	int monster = BaseNPC_Spawn(position, "models/combine_soldier.mdl", SoldierSeekThink, "npc_soldier", "CrouchIdle");
 
 	SDKHook(monster, SDKHook_OnTakeDamage, SoldierDamageHook);
 	
 	CreateTimer(10.0, SoldierIdleThink, EntIndexToEntRef(monster), TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE);
 	
 	
-	decl String:tmp[32];
+	char tmp[32];
 	GetEntPropString(monster, Prop_Data, "m_iName", tmp, sizeof(tmp));
-	new monster_tmp = StringToInt(tmp);
+	int monster_tmp = StringToInt(tmp);
 	
-	new weapon = CreateEntityByName("prop_dynamic_ornament");
+	int weapon = CreateEntityByName("prop_dynamic_ornament");
 	DispatchKeyValue(weapon, "model", "models/weapons/w_shotgun.mdl");
 	DispatchKeyValue(weapon, "classname", "shotgun");
 	DispatchSpawn(weapon);
 	
 
-	decl String:entIndex[6];
+	char entIndex[6];
 	IntToString(weapon, entIndex, sizeof(entIndex)-1);
 	
 	DispatchKeyValue(monster_tmp, "targetname", entIndex);
@@ -76,14 +80,16 @@ public Action:Soldier_Spawn(Float:position[3])
 	SoldierAttackThink
 	------------------------------------------------------------------------------------------
 */
-public Action:SoldierSeekThink(Handle:timer, any:monsterRef)
+public Action SoldierSeekThink(Handle timer, any monsterRef)
 {
-	new monster = EntRefToEntIndex(monsterRef);
+	int monster = EntRefToEntIndex(monsterRef);
 	
 	if (monster != INVALID_ENT_REFERENCE && IsValidEntity(monster))
 	{
-		new target = BaseNPC_GetTarget(monster);
-		new Float:vClientPosition[3], Float:vEntPosition[3], Float:vAngle[3];
+		int target = BaseNPC_GetTarget(monster);
+		float vClientPosition[3];
+		float vEntPosition[3];
+		float vAngle[3];
 		
 		GetEntPropVector(monster, Prop_Send, "m_vecOrigin", vEntPosition);
 		
@@ -98,7 +104,7 @@ public Action:SoldierSeekThink(Handle:timer, any:monsterRef)
 				//NormalizeVector(vAngle, vAngle);
 				GetVectorAngles(vAngle, vAngle);
 
-				Projectile(false, BaseNPC_GetOwner(monster), vEntPosition, vAngle, "models/Effects/combineball.mdl", gPlasmaSpeed, gPlasmaDamage, "weapons/Irifle/irifle_fire2.wav", true, Float:{0.4, 1.0, 1.0});
+				Projectile(false, BaseNPC_GetOwner(monster), vEntPosition, vAngle, "models/Effects/combineball.mdl", gPlasmaSpeed, gPlasmaDamage, "weapons/Irifle/irifle_fire2.wav", true, view_as<float>({0.4, 1.0, 1.0}));
 				
 				BaseNPC_SetAnimation(monster, "shootSGc");
 				SetEntityMoveType(monster, MOVETYPE_NONE);
@@ -126,9 +132,9 @@ public Action:SoldierSeekThink(Handle:timer, any:monsterRef)
 	SoldierIdleThink
 	------------------------------------------------------------------------------------------
 */
-public Action:SoldierIdleThink(Handle:timer, any:monsterRef)
+public Action SoldierIdleThink(Handle timer, any monsterRef)
 {
-	new monster = EntRefToEntIndex(monsterRef);
+	int monster = EntRefToEntIndex(monsterRef);
 	
 	if (monster != INVALID_ENT_REFERENCE && IsValidEntity(monster))
 	{
@@ -146,7 +152,7 @@ public Action:SoldierIdleThink(Handle:timer, any:monsterRef)
 	HeadCrabDamageHook
 	------------------------------------------------------------------------------------------
 */
-public Action:SoldierDamageHook(monster, &attacker, &inflictor, &Float:damage, &damagetype)
+public Action SoldierDamageHook(int monster, int& attacker, int& inflictor, float& damage, int& damagetype)
 {
 	if (BaseNPC_Hurt(monster, attacker, RoundToZero(damage), "npc/combine_soldier/pain1.wav"))
 	{

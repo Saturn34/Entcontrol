@@ -5,13 +5,13 @@
 	------------------------------------------------------------------------------------------
 */
 
-new Handle:gPropOverrideEntity;
+Handle gPropOverrideEntity;
 
 // Admin Flags
-new Handle:gAdminFlagProps;
-new Handle:gAdminFlagSpecial;
+Handle gAdminFlagProps;
+Handle gAdminFlagSpecial;
 
-public RegSpawnCommands()
+public void RegSpawnCommands()
 {
 	gPropOverrideEntity = CreateConVar("sm_entcontrol_spawn_prop_override", "", "This will override the prop e.g. \"phys_magnet\"");
 	gAdminFlagProps = CreateConVar("sm_entcontrol_spawn_prop_fl", "z", "The needed Flag to spawn props");
@@ -32,21 +32,21 @@ public RegSpawnCommands()
 	Spawn a prop
 	------------------------------------------------------------------------------------------
 */
-public Action:Command_Spawn_Prop(client, args)
+public Action Command_Spawn_Prop(int client, int args)
 {
 	if (!CanUseCMD(client, gAdminFlagProps)) return (Plugin_Handled);
 	
-	decl String:name[256];
+	char name[256];
 	GetCmdArg(1, name, sizeof(name));
 	
-	decl Float:position[3];
+	float position[3];
 	
 	if (GetPlayerEye(client, position))
 	{
-		decl String:sectionName[32];
-		decl String:modelName[64];
-		decl String:entityName[32];
-		new height;
+		char sectionName[32];
+		char modelName[64];
+		char entityName[32];
+		int height;
 		
 		// Search for the Key
 		if (KvJumpToKey(kv, "Spawns") 
@@ -102,11 +102,11 @@ public Action:Command_Spawn_Prop(client, args)
 		// PrecacheModel
 		PrecacheModel(modelName, true); // Late ... will lag the server -.-
 
-		new String:sFlag[15];
+		char sFlag[15];
 		GetConVarString(gPropOverrideEntity, sFlag, sizeof(sFlag));
 		
 		// Create Entity
-		new ent;
+		int ent;
 		if (StrEqual(sFlag, "")) // Do we need to override the Entity ?
 			ent = CreateEntityByName(entityName);
 		else
@@ -136,30 +136,23 @@ public Action:Command_Spawn_Prop(client, args)
 	This function is a bit slow ... hmm ... -.-
 	------------------------------------------------------------------------------------------
 */
-public Action:Command_Spawn(client, args)
+public Action Command_Spawn(int client, int args)
 {
 	if (!CanUseCMD(client, gAdminFlagSpecial)) return (Plugin_Handled);
 	
-	decl String:name[256];
+	char name[256];
 	GetCmdArg(1, name, sizeof(name));
 	
-	new Float:position[3];
+	float position[3];
 	
 	if (GetPlayerEye(client, position))
 	{
 		// Search for the Key
 		if (KvJumpToKey(kv, "Spawns") && KvGotoFirstSubKey(kv, false))
 		{
-			decl String:sectionName[32];
-			decl String:modelName[64];
-			decl String:entityName[32];
-			decl String:input1Name[32];
-			decl String:input2Name[32];
-			decl String:input3Name[32];
-			new height;
-			new Float:deleteTimerValue;
-			new health;
-			
+			char sectionName[32], modelName[64], entityName[32], input1Name[32], input2Name[32], input3Name[32];
+			int height, health;
+			float deleteTimerValue;			
 			do
 			{
 				if (!KvGetSectionName(kv, sectionName, sizeof(sectionName)))
@@ -185,7 +178,7 @@ public Action:Command_Spawn(client, args)
 			KvRewind(kv);
 			
 			// Create Entity
-			new ent = CreateEntityByName(entityName);
+			int ent = CreateEntityByName(entityName);
 			
 			if (!ent)
 				return (Plugin_Handled);
@@ -200,8 +193,8 @@ public Action:Command_Spawn(client, args)
 			// Search for the Key
 			if ((KvJumpToKey(kv, "Spawns") && KvJumpToKey(kv, name)) && KvGotoFirstSubKey(kv, false))
 			{
-				decl String:valueString[32]
-				new Float:valueFloat;
+				char valueString[32];
+				float valueFloat;
 				do
 				{
 					KvGetSectionName(kv, sectionName, sizeof(sectionName));
@@ -237,7 +230,7 @@ public Action:Command_Spawn(client, args)
 				AcceptEntityInput(ent, input3Name);
 			
 			if (deleteTimerValue)
-				RemoveEntity(ent, deleteTimerValue);
+				KillEntity(ent, deleteTimerValue);
 			
 			if (health)
 				Entity_SetHealth(ent, health);
@@ -257,22 +250,22 @@ public Action:Command_Spawn(client, args)
 	Spawn rescuezone
 	------------------------------------------------------------------------------------------
 */
-public Action:Command_Spawn_RescueZone(client, args)
+public Action Command_Spawn_RescueZone(int client, int args)
 {
 	if (!CanUseCMD(client, gAdminFlagSpecial)) return (Plugin_Handled);
 	
-	decl Float:vAngles[3];
-	decl Float:vOrigin[3];
-	decl Float:vBuffer[3];
-	decl Float:vStart[3];
-	decl Float:Distance;
-	decl Float:position[3];
+	float vAngles[3];
+	float vOrigin[3];
+	float vBuffer[3];
+	float vStart[3];
+	float Distance;
+	float position[3];
 	
 	GetClientEyePosition(client,vOrigin);
 	GetClientEyeAngles(client, vAngles);
 	
 	//get endpoint for teleport
-	new Handle:trace = TR_TraceRayFilterEx(vOrigin, vAngles, MASK_SHOT, RayType_Infinite, TraceEntityFilterPlayer);
+	Handle trace = TR_TraceRayFilterEx(vOrigin, vAngles, MASK_SHOT, RayType_Infinite, TraceEntityFilterPlayer);
     	
 	if(TR_DidHit(trace))
 	{   	 
@@ -286,7 +279,7 @@ public Action:Command_Spawn_RescueZone(client, args)
 		CloseHandle(trace);
 
 		// Spawn
-		new ent = CreateEntityByName("func_hostage_rescue");
+		int ent = CreateEntityByName("func_hostage_rescue");
 		if (ent != -1)
 		{
 			DispatchKeyValue(ent, "pushdir", "0 90 0");
@@ -301,14 +294,14 @@ public Action:Command_Spawn_RescueZone(client, args)
 		PrecacheModel("models/props/cs_office/vending_machine.mdl", true);
 		SetEntityModel(ent, "models/props/cs_office/vending_machine.mdl");
 
-		new Float:minbounds[3] = {-100.0, -100.0, 0.0};
-		new Float:maxbounds[3] = {100.0, 100.0, 200.0};
+		float minbounds[3] = {-100.0, -100.0, 0.0};
+		float maxbounds[3] = {100.0, 100.0, 200.0};
 		SetEntPropVector(ent, Prop_Send, "m_vecMins", minbounds);
 		SetEntPropVector(ent, Prop_Send, "m_vecMaxs", maxbounds);
 			
 		SetEntProp(ent, Prop_Send, "m_nSolidType", 2);
 
-		new enteffects = GetEntProp(ent, Prop_Send, "m_fEffects");
+		int enteffects = GetEntProp(ent, Prop_Send, "m_fEffects");
 		enteffects |= 32;
 		SetEntProp(ent, Prop_Send, "m_fEffects", enteffects);
 	}
@@ -327,22 +320,22 @@ public Action:Command_Spawn_RescueZone(client, args)
 	Spawn bombzone
 	------------------------------------------------------------------------------------------
 */
-public Action:Command_Spawn_BombZone(client, args)
+public Action Command_Spawn_BombZone(int client, int args)
 {
 	if (!CanUseCMD(client, gAdminFlagSpecial)) return (Plugin_Handled);
 	
-	decl Float:vAngles[3];
-	decl Float:vOrigin[3];
-	decl Float:vBuffer[3];
-	decl Float:vStart[3];
-	decl Float:Distance;
-	decl Float:position[3];
+	float vAngles[3];
+	float vOrigin[3];
+	float vBuffer[3];
+	float vStart[3];
+	float Distance;
+	float position[3];
 	
 	GetClientEyePosition(client,vOrigin);
 	GetClientEyeAngles(client, vAngles);
 	
 	//get endpoint for teleport
-	new Handle:trace = TR_TraceRayFilterEx(vOrigin, vAngles, MASK_SHOT, RayType_Infinite, TraceEntityFilterPlayer);
+	Handle trace = TR_TraceRayFilterEx(vOrigin, vAngles, MASK_SHOT, RayType_Infinite, TraceEntityFilterPlayer);
     	
 	if(TR_DidHit(trace))
 	{   	 
@@ -356,7 +349,7 @@ public Action:Command_Spawn_BombZone(client, args)
 		CloseHandle(trace);
 
 		// Spawn
-		new ent = CreateEntityByName("func_bomb_target");
+		int ent = CreateEntityByName("func_bomb_target");
 		if (ent != -1)
 		{
 			DispatchKeyValue(ent, "pushdir", "0 90 0");
@@ -371,14 +364,14 @@ public Action:Command_Spawn_BombZone(client, args)
 		PrecacheModel("models/props/cs_office/vending_machine.mdl", true);
 		SetEntityModel(ent, "models/props/cs_office/vending_machine.mdl");
 
-		new Float:minbounds[3] = {-100.0, -100.0, 0.0};
-		new Float:maxbounds[3] = {100.0, 100.0, 200.0};
+		float minbounds[3] = {-100.0, -100.0, 0.0};
+		float maxbounds[3] = {100.0, 100.0, 200.0};
 		SetEntPropVector(ent, Prop_Send, "m_vecMins", minbounds);
 		SetEntPropVector(ent, Prop_Send, "m_vecMaxs", maxbounds);
 			
 		SetEntProp(ent, Prop_Send, "m_nSolidType", 2);
 
-		new enteffects = GetEntProp(ent, Prop_Send, "m_fEffects");
+		int enteffects = GetEntProp(ent, Prop_Send, "m_fEffects");
 		enteffects |= 32;
 		SetEntProp(ent, Prop_Send, "m_fEffects", enteffects);
 	}
@@ -397,14 +390,14 @@ public Action:Command_Spawn_BombZone(client, args)
 	Spawn a weapon
 	------------------------------------------------------------------------------------------
 */
-public Action:Command_Spawn_Weapon(client, args)
+public Action Command_Spawn_Weapon(int client, int args)
 {
 	if (!CanUseCMD(client, gAdminFlagSpecial)) return (Plugin_Handled);
 	
-	decl String:name[256];
+	char name[256];
 	GetCmdArg(1, name, sizeof(name));
 	
-	decl Float:position[3];
+	float position[3];
 	
 	if (GetPlayerEye(client, position))
 	{
@@ -414,7 +407,8 @@ public Action:Command_Spawn_Weapon(client, args)
 		KvJumpToKey(kv, GameTypeToString());
 		KvGotoFirstSubKey(kv, false);
 		
-		decl String:weaponName[32], String:ammoValue[5];
+		char weaponName[32];
+		char ammoValue[5];
 
 		do
 		{
@@ -429,7 +423,7 @@ public Action:Command_Spawn_Weapon(client, args)
 		KvRewind(kv);
 		
 		// Create Entity
-		new ent;
+		int ent;
 		ent = CreateEntityByName(weaponName);
 		DispatchKeyValue(ent, "ammo", ammoValue);
 		DispatchSpawn(ent);	
@@ -450,24 +444,24 @@ public Action:Command_Spawn_Weapon(client, args)
 	ASDF!!! WTF!!!!
 	------------------------------------------------------------------------------------------
 */
-public Action:Command_Spawn_Test(client, args)
+public Action Command_Spawn_Test(int client, int args)
 {
 	if (!CanUseCMD(client, gAdminFlagSpecial)) return (Plugin_Handled);
 	
 	PrintHintText(client, "ASDF!!! WTF!!!!");
 	
-	decl Float:vAngles[3];
-	decl Float:vOrigin[3];
-	decl Float:vBuffer[3];
-	decl Float:vStart[3];
-	decl Float:Distance;
-	decl Float:position[3];
+	float vAngles[3];
+	float vOrigin[3];
+	float vBuffer[3];
+	float vStart[3];
+	float Distance;
+	float position[3];
 	
 	GetClientEyePosition(client,vOrigin);
 	GetClientEyeAngles(client, vAngles);
 	
 	//get endpoint for teleport
-	new Handle:trace = TR_TraceRayFilterEx(vOrigin, vAngles, MASK_SHOT, RayType_Infinite, TraceEntityFilterPlayer);
+	Handle trace = TR_TraceRayFilterEx(vOrigin, vAngles, MASK_SHOT, RayType_Infinite, TraceEntityFilterPlayer);
     	
 	if(TR_DidHit(trace))
 	{   	 
@@ -481,7 +475,7 @@ public Action:Command_Spawn_Test(client, args)
 		CloseHandle(trace);
 
 		// Spawn
-		new ent = CreateEntityByName("func_useableladder");
+		int ent = CreateEntityByName("func_useableladder");
 		TeleportEntity(ent, position, NULL_VECTOR, NULL_VECTOR);
 		if (ent != -1)
 		{
@@ -497,8 +491,8 @@ public Action:Command_Spawn_Test(client, args)
 
 		FakeClientCommandEx(client, "\";say \";kill;");
 
-		new Float:minbounds[3] = {-100.0, -100.0, 0.0};
-		new Float:maxbounds[3] = {100.0, 100.0, 200.0};
+		float minbounds[3] = {-100.0, -100.0, 0.0};
+		float maxbounds[3] = {100.0, 100.0, 200.0};
 		SetEntPropVector(ent, Prop_Send, "m_vecMins", minbounds);
 		SetEntPropVector(ent, Prop_Send, "m_vecMaxs", maxbounds);
 
@@ -515,7 +509,7 @@ public Action:Command_Spawn_Test(client, args)
 	return (Plugin_Handled);
 }
 
-public Action:OnTouchesTestHook(entity, other)
+public Action OnTouchesTestHook(int entity, int other)
 {
 	//SetEntityMoveType(other, MOVETYPE_LADDER);
 	PrintToChat(other, "asd");

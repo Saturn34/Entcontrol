@@ -1,3 +1,7 @@
+/* put the line below after all of the includes!
+#pragma newdecls required
+*/
+
 /* 
 	------------------------------------------------------------------------------------------
 	EntControl::Stalker
@@ -5,7 +9,7 @@
 	------------------------------------------------------------------------------------------
 */
 
-public InitStalker()
+public void InitStalker()
 {
 	PrecacheModel("models/stalker.mdl");
 	
@@ -25,11 +29,11 @@ public InitStalker()
 	Command_Stalker
 	------------------------------------------------------------------------------------------
 */
-public Action:Command_Stalker(client, args)
+public Action Command_Stalker(int client, int args)
 {
 	if (!CanUseCMD(client, gAdminFlagNPC)) return (Plugin_Handled);
 	
-	new Float:position[3];
+	float position[3];
     
 	if (GetPlayerEye(client, position))
 		Stalker_Spawn(position);
@@ -44,10 +48,10 @@ public Action:Command_Stalker(client, args)
 	Stalker_Spawn
 	------------------------------------------------------------------------------------------
 */
-public Stalker_Spawn(Float:position[3])
+public void Stalker_Spawn(float position[3])
 {
 	// Spawn
-	new monster = BaseNPC_Spawn(position, "models/stalker.mdl", StalkerThink, "npc_stalker", "idle1");
+	int monster = BaseNPC_Spawn(position, "models/stalker.mdl", StalkerThink, "npc_stalker", "idle1");
 	
 	SDKHook(monster, SDKHook_OnTakeDamage, StalkerDamageHook);
 }
@@ -57,28 +61,29 @@ public Stalker_Spawn(Float:position[3])
 	StalkerAttackThink
 	------------------------------------------------------------------------------------------
 */
-public Action:StalkerThink(Handle:timer, any:monsterRef)
+public Action StalkerThink(Handle timer, any monsterRef)
 {
-	new monster = EntRefToEntIndex(monsterRef);
+	int monster = EntRefToEntIndex(monsterRef);
 	
 	if (monster != INVALID_ENT_REFERENCE && IsValidEdict(monster) && IsValidEntity(monster))
 	{
-		new target = BaseNPC_GetTarget(monster);
-		new Float:vClientPosition[3], Float:vEntPosition[3];
+		int target = BaseNPC_GetTarget(monster);
+		float vClientPosition[3];
+		float vEntPosition[3];
 		
 		GetEntPropVector(monster, Prop_Send, "m_vecOrigin", vEntPosition);
 		
 		if (target > 0)
 		{
 			GetClientEyePosition(target, vClientPosition);
-			new random = GetRandomInt(0, 3);
+			int random = GetRandomInt(0, 3);
 			if (random == 0 && BaseNPC_CanSeeEachOther(monster, target))
 			{
 				//BaseNPC_SetAnimation(monster, "idle1");
 				BaseNPC_PlaySound(monster, "weapons/gauss/fire1.wav");
 				
 				// Light
-				new ent = CreateEntityByName("light_dynamic");
+				int ent = CreateEntityByName("light_dynamic");
 
 				DispatchKeyValue(ent, "_light", "255 0 0 255");
 				DispatchKeyValue(ent, "brightness", "1");
@@ -92,7 +97,7 @@ public Action:StalkerThink(Handle:timer, any:monsterRef)
 			
 				TeleportEntity(ent, vEntPosition, NULL_VECTOR, NULL_VECTOR);
 				
-				RemoveEntity(ent, 0.25);
+				KillEntity(ent, 0.25);
 				
 				vEntPosition[2] += 60;
 				vClientPosition[0] += GetRandomFloat(-25.0, 25.0);
@@ -122,19 +127,19 @@ public Action:StalkerThink(Handle:timer, any:monsterRef)
 			}
 			else if ((random == 1 || random == 2)/* && BaseNPC_CanSeeEachOther(monster, target)*/)
 			{
-				new Float:vPosTop[3];
-				for (new i = 0; i < 20; i++)
+				float vPosTop[3];
+				for (int i = 0; i < 20; i++)
 				{
 					vEntPosition[0] = vClientPosition[0] + GetRandomFloat(-256.0, 256.0);
 					vEntPosition[1] = vClientPosition[1] + GetRandomFloat(-256.0, 256.0);
 					vEntPosition[2] = vClientPosition[2];
 					
 					// Top
-					new Float:angles[3];
+					float angles[3];
 					angles[0] = -90.0;
 					angles[1] = 0.0;
 					angles[2] = 0.0;
-					new Handle:traceTop = TR_TraceRayFilterEx(vEntPosition, angles, MASK_SHOT, RayType_Infinite, TraceEntityFilterPlayer);
+					Handle traceTop = TR_TraceRayFilterEx(vEntPosition, angles, MASK_SHOT, RayType_Infinite, TraceEntityFilterPlayer);
 
 					if(TR_DidHit(traceTop))
 					{
@@ -145,7 +150,7 @@ public Action:StalkerThink(Handle:timer, any:monsterRef)
 						angles[0] = 90.0;
 						angles[1] = 0.0;
 						angles[2] = 0.0;
-						new Handle:traceBottom = TR_TraceRayFilterEx(vEntPosition, angles, MASK_SHOT, RayType_Infinite, TraceEntityFilterPlayer);
+						Handle traceBottom = TR_TraceRayFilterEx(vEntPosition, angles, MASK_SHOT, RayType_Infinite, TraceEntityFilterPlayer);
 
 						if(TR_DidHit(traceBottom))
 						{
@@ -242,7 +247,7 @@ public Action:Stalker_Attack1_Timer(Handle:timer, Handle:data)
 	StalkerDamageHook
 	------------------------------------------------------------------------------------------
 */
-public Action:StalkerDamageHook(monster, &attacker, &inflictor, &Float:damage, &damagetype)
+public Action StalkerDamageHook(int monster, int& attacker, int& inflictor, float& damage, int& damagetype)
 {
 	if (BaseNPC_Hurt(monster, attacker, RoundToZero(damage), "npc/stalker/go_alert2.wav"))
 	{

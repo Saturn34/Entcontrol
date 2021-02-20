@@ -1,3 +1,7 @@
+/* put the line below after all of the includes!
+#pragma newdecls required
+*/
+
 /* 
 	------------------------------------------------------------------------------------------
 	EntControl::World
@@ -5,25 +9,25 @@
 	------------------------------------------------------------------------------------------
 */
 
-stock World_TurnOffLights()
+stock void World_TurnOffLights()
 {
-	new entity = -1;
+	int entity = -1;
 	while ((entity = FindEntityByClassname(entity, "light")) != INVALID_ENT_REFERENCE)
 		if (IsValidEdict(entity) && IsValidEntity(entity))
 			AcceptEntityInput(entity, "TurnOff");
 }
 
-stock World_TurnOnLights()
+stock void World_TurnOnLights()
 {
-	new entity = -1;
+	int entity = -1;
 	while ((entity = FindEntityByClassname(entity, "light")) != INVALID_ENT_REFERENCE)
 		if (IsValidEdict(entity) && IsValidEntity(entity))
 			AcceptEntityInput(entity, "TurnOn");
 }
 
-stock World_EnableFog()
+stock void World_EnableFog()
 {
-	new fog = -1;
+	int fog = -1;
 	fog = FindEntityByClassname(fog, "env_fog_controller");
 	
 	if (fog != -1)
@@ -32,9 +36,9 @@ stock World_EnableFog()
 	}
 }
 
-stock World_DisableFog()
+stock void World_DisableFog()
 {
-	new fog = -1;
+	int fog = -1;
 	fog = FindEntityByClassname(fog, "env_fog_controller");
 	
 	if (fog != -1)

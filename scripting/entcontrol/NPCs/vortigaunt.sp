@@ -1,3 +1,7 @@
+/* put the line below after all of the includes!
+#pragma newdecls required
+*/
+
 /* 
 	------------------------------------------------------------------------------------------
 	EntControl::Vortigaunt
@@ -5,9 +9,9 @@
 	------------------------------------------------------------------------------------------
 */
 
-new gVortigauntBeam;
+int gVortigauntBeam;
 
-public InitVortigaunt()
+public void InitVortigaunt()
 {
 	PrecacheModel("models/vortigaunt.mdl");
 	PrecacheSound("npc/vort/attack_shoot.wav");
@@ -23,12 +27,12 @@ public InitVortigaunt()
 	Command_Vortigaunt
 	------------------------------------------------------------------------------------------
 */
-public Action:Command_Vortigaunt(client, args)
+public Action Command_Vortigaunt(int client, int args)
 {
 	if (!CanUseCMD(client, gAdminFlagNPC)) return (Plugin_Handled);
 	
-	decl Float:position[3];
-	if(GetPlayerEye(client, position))
+	float position[3];
+	if (GetPlayerEye(client, position))
 		Vortigaunt_Spawn(position);
 	else
 		PrintHintText(client, "%t", "Wrong entity"); 
@@ -41,10 +45,10 @@ public Action:Command_Vortigaunt(client, args)
 	Vortigaunt_Spawn
 	------------------------------------------------------------------------------------------
 */
-public Vortigaunt_Spawn(Float:position[3])
+public void Vortigaunt_Spawn(float position[3])
 {
 	// Spawn
-	new monster = BaseNPC_Spawn(position, "models/vortigaunt.mdl", VortigauntSeekThink, "npc_vortigaunt", "Idle01");
+	int monster = BaseNPC_Spawn(position, "models/vortigaunt.mdl", VortigauntSeekThink, "npc_vortigaunt", "Idle01");
 
 	SDKHook(monster, SDKHook_OnTakeDamage, VortigauntDamageHook);
 
@@ -56,15 +60,16 @@ public Vortigaunt_Spawn(Float:position[3])
 	VortigauntSeekThink
 	------------------------------------------------------------------------------------------
 */
-public Action:VortigauntSeekThink(Handle:timer, any:monsterRef)
+public Action VortigauntSeekThink(Handle timer, any monsterRef)
 {
-	new monster = EntRefToEntIndex(monsterRef);
+	int monster = EntRefToEntIndex(monsterRef);
 	
 	if (monster != INVALID_ENT_REFERENCE && IsValidEntity(monster))
 	{
-		new Float:vClientPosition[3], Float:vEntPosition[3];
+		float vClientPosition[3];
+		float vEntPosition[3];
 		
-		new target = BaseNPC_GetTarget(monster);
+		int target = BaseNPC_GetTarget(monster);
 		
 		GetEntPropVector(monster, Prop_Send, "m_vecOrigin", vEntPosition);
 		
@@ -98,16 +103,17 @@ public Action:VortigauntSeekThink(Handle:timer, any:monsterRef)
 	VortigauntShootThink
 	------------------------------------------------------------------------------------------
 */
-public Action:VortigauntShootThink(Handle:timer, any:monsterRef)
+public Action VortigauntShootThink(Handle timer, any monsterRef)
 {
-	new monster = EntRefToEntIndex(monsterRef);
+	int monster = EntRefToEntIndex(monsterRef);
 	
 	if (monster != INVALID_ENT_REFERENCE && IsValidEntity(monster))
 	{
-		new target = BaseNPC_GetTarget(monster);
+		int target = BaseNPC_GetTarget(monster);
 		if (target > 0)
 		{
-			new Float:vClientPosition[3], Float:vEntPosition[3];
+			float vClientPosition[3];
+			float vEntPosition[3];
 			
 			GetClientEyePosition(target, vClientPosition);
 			GetEntPropVector(monster, Prop_Send, "m_vecOrigin", vEntPosition);
@@ -132,10 +138,11 @@ public Action:VortigauntShootThink(Handle:timer, any:monsterRef)
 	VortigauntShoot
 	------------------------------------------------------------------------------------------
 */
-public Action:VortigauntShoot(Handle:timer, Handle:data)
+public Action VortigauntShoot(Handle timer, Handle data)
 {
-	new monster, target;
-	new Float:vClientPosition[3], Float:vEntPosition[3];
+	int monster, target;
+	float vClientPosition[3];
+	float vEntPosition[3];
 	
 	ResetPack(data);
 	monster = EntRefToEntIndex(ReadPackCell(data));
@@ -172,7 +179,7 @@ public Action:VortigauntShoot(Handle:timer, Handle:data)
 	Attack1 -> Melee
 	------------------------------------------------------------------------------------------
 */
-public VortigauntAttack1(monster, target, Float:vClientPosition[3], Float:vEntPosition[3])
+public void VortigauntAttack1(int monster, int target, float vClientPosition[3], float vEntPosition[3])
 {
 	MakeDamage(fakeClient, target, 57, DMG_BULLET, 100.0, vClientPosition);
 	
@@ -187,9 +194,9 @@ public VortigauntAttack1(monster, target, Float:vClientPosition[3], Float:vEntPo
 	Attack2 -> Shoot
 	------------------------------------------------------------------------------------------
 */
-public VortigauntAttack2(monster, target, Float:vClientPosition[3], Float:vEntPosition[3])
+public void VortigauntAttack2(int monster, int target, float vClientPosition[3], float vEntPosition[3])
 {
-	new Float:vAngle[3];
+	float vAngle[3];
 
 	BaseNPC_SetAnimation(monster, "zapattack1");
 
@@ -206,7 +213,7 @@ public VortigauntAttack2(monster, target, Float:vClientPosition[3], Float:vEntPo
 	TE_SendToAll();
 
 	// Light
-	new light = CreateEntityByName("light_dynamic");
+	int light = CreateEntityByName("light_dynamic");
 
 	DispatchKeyValue(light, "_light", "100 255 100 255");
 	DispatchKeyValue(light, "brightness", "3");
@@ -220,11 +227,11 @@ public VortigauntAttack2(monster, target, Float:vClientPosition[3], Float:vEntPo
 
 	TeleportEntity(light, vEntPosition, NULL_VECTOR, NULL_VECTOR);
 
-	RemoveEntity(light, 1.5);
+	KillEntity(light, 1.5);
 
 	SetEntityMoveType(monster, MOVETYPE_NONE);
 
-	new Handle:data;
+	Handle data;
 	CreateDataTimer(1.5, VortigauntShoot, data, TIMER_FLAG_NO_MAPCHANGE);	
 	WritePackCell(data, EntIndexToEntRef(monster));
 	WritePackCell(data, target);
@@ -238,7 +245,7 @@ public VortigauntAttack2(monster, target, Float:vClientPosition[3], Float:vEntPo
 	VortigauntDamageHook
 	------------------------------------------------------------------------------------------
 */
-public Action:VortigauntDamageHook(monster, &attacker, &inflictor, &Float:damage, &damagetype)
+public Action VortigauntDamageHook(int monster, int& attacker, int& inflictor, float& damage, int& damagetype)
 {
 	if (BaseNPC_Hurt(monster, attacker, RoundToZero(damage), "npc/antlion_guard/angry2.wav"))
 	{
@@ -247,7 +254,8 @@ public Action:VortigauntDamageHook(monster, &attacker, &inflictor, &Float:damage
 	}
 	else
 	{
-		new Float:vClientPosition[3], Float:vEntPosition[3];
+		float vClientPosition[3];
+		float vEntPosition[3];
 		
 		if (attacker > 0)
 		{

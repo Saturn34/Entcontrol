@@ -1,3 +1,7 @@
+/* put the line below after all of the includes!
+#pragma newdecls required
+*/
+
 /* 
 	------------------------------------------------------------------------------------------
 	EntControl::Synth
@@ -5,7 +9,7 @@
 	------------------------------------------------------------------------------------------
 */
 
-public InitSynth()
+public void InitSynth()
 {
 	PrecacheModel("models/synth.mdl");
 	PrecacheModel("models/manhack.mdl");
@@ -15,8 +19,8 @@ public InitSynth()
 	PrecacheSound("npc/strider/striderx_die1.wav");
 	PrecacheSound("npc/strider/striderx_pain2.wav");
 	
-	new String:sound[37];
-	for (new i = 1; i <= 6; i++)
+	char sound[37];
+	for (int i = 1; i <= 6; i++)
 	{
 		Format(sound, sizeof(sound), "npc/strider/strider_step%i.wav", i);
 		PrecacheSound(sound);
@@ -28,11 +32,11 @@ public InitSynth()
 	Command_Synth
 	------------------------------------------------------------------------------------------
 */
-public Action:Command_Synth(client, args)
+public Action Command_Synth(int client, int args)
 {
 	if (!CanUseCMD(client, gAdminFlagNPC)) return (Plugin_Handled);
 	
-	new Float:position[3];
+	float position[3];
 	if (GetPlayerEye(client, position))
 		Synth_Spawn(position);
 	else
@@ -46,10 +50,10 @@ public Action:Command_Synth(client, args)
 	Synth_Spawn
 	------------------------------------------------------------------------------------------
 */
-public Synth_Spawn(Float:position[3])
+public void Synth_Spawn(float position[3])
 {
 	// Spawn
-	new monster = BaseNPC_Spawn(position, "models/synth.mdl", SynthThink, "npc_synth", "idle01");
+	int monster = BaseNPC_Spawn(position, "models/synth.mdl", SynthThink, "npc_synth", "idle01");
 	SetEntityMoveType(monster, MOVETYPE_NONE);
 	
 	SDKHook(monster, SDKHook_OnTakeDamage, Synth_DamageHook);
@@ -60,21 +64,22 @@ public Synth_Spawn(Float:position[3])
 	SynthAttackThink
 	------------------------------------------------------------------------------------------
 */
-public Action:SynthThink(Handle:timer, any:monsterRef)
+public Action SynthThink(Handle timer, any monsterRef)
 {
-	new monster = EntRefToEntIndex(monsterRef);
+	int monster = EntRefToEntIndex(monsterRef);
 	
 	if (monster != INVALID_ENT_REFERENCE && BaseNPC_IsAlive(monster))
 	{
-		new target = BaseNPC_GetTarget(monster);
-		new Float:vClientPosition[3], Float:vEntPosition[3];
+		int target = BaseNPC_GetTarget(monster);
+		float vClientPosition[3];
+		float vEntPosition[3];
 		
 		GetEntPropVector(monster, Prop_Send, "m_vecOrigin", vEntPosition);
 		
 		if (target > 0)
 		{
 			GetClientEyePosition(target, vClientPosition);
-			new random = GetRandomInt(0, 3);
+			int random = GetRandomInt(0, 3);
 			if (random == 1)
 			{
 				SetEntityMoveType(monster, MOVETYPE_NONE);
@@ -91,7 +96,7 @@ public Action:SynthThink(Handle:timer, any:monsterRef)
 				TE_SendToAll();
 
 				// Light
-				new ent = CreateEntityByName("light_dynamic");
+				int ent = CreateEntityByName("light_dynamic");
 
 				DispatchKeyValue(ent, "_light", "120 120 255 255");
 				DispatchKeyValue(ent, "brightness", "5");
@@ -105,7 +110,7 @@ public Action:SynthThink(Handle:timer, any:monsterRef)
 				
 				TeleportEntity(ent, vEntPosition, NULL_VECTOR, NULL_VECTOR);
 				
-				RemoveEntity(ent, 0.5);
+				KillEntity(ent, 0.5);
 				
 				vEntPosition[2] += 15.0;
 				//makeexplosion(IsClientConnectedIngame(client) ? client : 0, -1, vEntPosition, "", 300);
@@ -115,8 +120,9 @@ public Action:SynthThink(Handle:timer, any:monsterRef)
 				EmitSoundToAll("weapons/physcannon/energy_disintegrate4.wav", 0, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL, -1, vEntPosition);
 				
 				// Knockback
-				new Float:vReturn[3], Float:dist;
-				for (new i = 1; i <= MaxClients; i++)
+				float vReturn[3];
+				float dist;
+				for (int i = 1; i <= MaxClients; i++)
 				{
 					if (IsClientConnected(i) && IsClientInGame(i) && IsPlayerAlive(i))
 					{	
@@ -162,7 +168,7 @@ public Action:SynthThink(Handle:timer, any:monsterRef)
 			{
 				SetEntityMoveType(monster, MOVETYPE_STEP);
 				BaseNPC_SetAnimation(monster, "walk01", 1.97);
-				decl String:soundfile[40];
+				char soundfile[40];
 				Format(soundfile, sizeof(soundfile), "npc/strider/strider_step%i.wav", GetRandomInt(1, 6));
 
 				BaseNPC_PlaySound(monster, soundfile);
@@ -184,15 +190,16 @@ public Action:SynthThink(Handle:timer, any:monsterRef)
 	Synth_Shoot_Bullet_Timer
 	------------------------------------------------------------------------------------------
 */
-public Action:Synth_Shoot_Bullet_Timer(Handle:timer, any:monsterRef)
+public Action Synth_Shoot_Bullet_Timer(Handle timer, any monsterRef)
 {
-	new monster = EntRefToEntIndex(monsterRef);
+	int monster = EntRefToEntIndex(monsterRef);
 	
 	if (monster != INVALID_ENT_REFERENCE)
 	{
-		new target = BaseNPC_GetTarget(monster);
-		new Float:vAngle[3];
-		new Float:vClientPosition[3], Float:vEntPosition[3];
+		int target = BaseNPC_GetTarget(monster);
+		float vAngle[3];
+		float vClientPosition[3];
+		float vEntPosition[3];
 		
 		GetEntPropVector(monster, Prop_Send, "m_vecOrigin", vEntPosition);
 		if (target > 0)
@@ -220,10 +227,10 @@ public Action:Synth_Shoot_Bullet_Timer(Handle:timer, any:monsterRef)
 	Shoots the Synth´s rocket
 	------------------------------------------------------------------------------------------
 */
-stock Synth_RocketAttack(monster)
+stock void Synth_RocketAttack(int monster)
 {
-	new Float:vAngle[3], Float:vEntPosition[3], Float:vClientPosition[3], entity;
-	new target = BaseNPC_GetTarget(monster);
+	float vAngle[3], vEntPosition[3], vClientPosition[3];
+	int entity, target = BaseNPC_GetTarget(monster);
 	
 	GetEntPropVector(monster, Prop_Send, "m_vecOrigin", vEntPosition);
 	GetClientEyePosition(target, vClientPosition);
@@ -243,10 +250,10 @@ stock Synth_RocketAttack(monster)
 	Shoots the Synth´s Manhack
 	------------------------------------------------------------------------------------------
 */
-stock Synth_Manhack(monster)
+stock void Synth_Manhack(int monster)
 {
-	new Float:vAngle[3], Float:vAngleVector[3], Float:vResultPosition[3], Float:vEntPosition[3], Float:vClientPosition[3], entity;
-	new target = BaseNPC_GetTarget(monster);
+	float vAngle[3], vAngleVector[3], vResultPosition[3], vEntPosition[3], vClientPosition[3];
+	int entity, target = BaseNPC_GetTarget(monster);
 	
 	GetEntPropVector(monster, Prop_Send, "m_vecOrigin", vEntPosition);
 	GetClientEyePosition(target, vClientPosition);
@@ -283,7 +290,7 @@ stock Synth_Manhack(monster)
 	SetEntityMoveType(entity, MOVETYPE_FLY);
 }
 
-public Action:Synth_ManhackTouchHook(entity, other)
+public Action Synth_ManhackTouchHook(int entity, int other)
 {
 	if(other/* && IsEntityCollidable(other, true, true, true)*/)
 		Synth_ManhackExplode(entity);
@@ -291,26 +298,29 @@ public Action:Synth_ManhackTouchHook(entity, other)
 	return (Plugin_Continue);
 }
 
-public Action:Synth_ManhackDamageHook(entity, &attacker, &inflictor, &Float:damage, &damagetype)
+public Action Synth_ManhackDamageHook(int entity, int& attacker, int& inflictor, float& damage, int& damagetype)
 {
 	Synth_ManhackJustDie(entity);
 
 	return (Plugin_Continue);
 }
 
-public Action:Synth_ManhackSeekThink(Handle:Timer, any:entityRef)
+public Action Synth_ManhackSeekThink(Handle Timer, any entityRef)
 {
-	new entity = EntRefToEntIndex(entityRef);
+	int entity = EntRefToEntIndex(entityRef);
 	
 	if (entity != INVALID_ENT_REFERENCE && IsValidEdict(entity) && IsValidEntity(entity))
 	{
-		new monster = GetEntPropEnt(entity, Prop_Send, "m_hOwnerEntity");
+		int monster = GetEntPropEnt(entity, Prop_Send, "m_hOwnerEntity");
 		if (IsValidEdict(monster) && IsValidEntity(monster))
 		{
-			new target = BaseNPC_GetTarget(monster);
+			int target = BaseNPC_GetTarget(monster);
 			if (target > 0 && BaseNPC_CanSeeEachOther(entity, target))
 			{
-				new Float:vEntPosition[3], Float:vClientPosition[3], Float:vAngle[3], Float:vAngleVector[3];
+				float vEntPosition[3];
+				float vClientPosition[3];
+				float vAngle[3];
+				float vAngleVector[3];
 				GetEntPropVector(entity, Prop_Send, "m_vecOrigin", vEntPosition);
 				GetClientEyePosition(target, vClientPosition);
 				
@@ -338,14 +348,14 @@ public Action:Synth_ManhackSeekThink(Handle:Timer, any:entityRef)
 	return (Plugin_Stop);
 }
 
-stock Synth_ManhackExplode(entity)
+stock void Synth_ManhackExplode(int entity)
 {
 	SDKUnhook(entity, SDKHook_StartTouch, Synth_ManhackTouchHook);
 	SDKUnhook(entity, SDKHook_OnTakeDamage, Synth_ManhackDamageHook);
 
 	if(IsValidEdict(entity) && IsValidEntity(entity))
 	{
-		new Float:vEntPosition[3];
+		float vEntPosition[3];
 		GetEntPropVector(entity, Prop_Send, "m_vecOrigin", vEntPosition);
 
 		RemoveEntity(entity);
@@ -357,7 +367,7 @@ stock Synth_ManhackExplode(entity)
 	}
 }
 
-stock Synth_ManhackJustDie(entity)
+stock void Synth_ManhackJustDie(int entity)
 {
 	SDKUnhook(entity, SDKHook_StartTouch, Synth_ManhackTouchHook);
 	SDKUnhook(entity, SDKHook_OnTakeDamage, Synth_ManhackDamageHook);
@@ -371,9 +381,9 @@ stock Synth_ManhackJustDie(entity)
 	Synth_DamageHook
 	------------------------------------------------------------------------------------------
 */
-public Action:Synth_DamageHook(monster, &attacker, &inflictor, &Float:damage, &damagetype)
+public Action Synth_DamageHook(int monster, int& attacker, int& inflictor, float& damage, int& damagetype)
 {
-	decl String:classname[32];
+	char classname[32];
 	GetEdictClassname(attacker, classname, 32);
 	
 	if (StrEqual(classname, "player") && BaseNPC_Hurt(monster, attacker, RoundToZero(damage), "npc/strider/striderx_pain2.wav"))

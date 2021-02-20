@@ -1,3 +1,7 @@
+/* put the line below after all of the includes!
+#pragma newdecls required
+*/
+
 /* 
 	------------------------------------------------------------------------------------------
 	EntControl::Barney
@@ -5,7 +9,7 @@
 	------------------------------------------------------------------------------------------
 */
 
-public InitBarney()
+public void InitBarney()
 {
 	PrecacheModel("models/barney.mdl");
 	PrecacheModel("models/weapons/w_pistol.mdl");
@@ -24,11 +28,11 @@ public InitBarney()
 	Command_Barney
 	------------------------------------------------------------------------------------------
 */
-public Action:Command_Barney(client, args)
+public Action Command_Barney(int client, int args)
 {
 	if (!CanUseCMD(client, gAdminFlagNPC)) return (Plugin_Handled);
 	
-	decl Float:position[3];
+	float position[3];
 	if (GetPlayerEye(client, position))
 		Barney_Spawn(position);
 	else
@@ -42,9 +46,9 @@ public Action:Command_Barney(client, args)
 	Barney_Spawn
 	------------------------------------------------------------------------------------------
 */
-public Barney_Spawn(Float:position[3])
+public void Barney_Spawn(float position[3])
 {
-	new monster = BaseNPC_Spawn(position, "models/barney.mdl", BarneySeekThink, "npc_barney", "wave");
+	int monster = BaseNPC_Spawn(position, "models/barney.mdl", BarneySeekThink, "npc_barney", "wave");
 	
 	SDKHook(monster, SDKHook_OnTakeDamage, BarneyDamageHook);
 	
@@ -58,30 +62,30 @@ public Barney_Spawn(Float:position[3])
 	Barney_Touch
 	------------------------------------------------------------------------------------------
 */
-public Action:Barney_Touch(monster, other)
+public Action Barney_Touch(int monster, int other)
 {
 	if (other)
 	{
-		decl String:tmp[32];
+		char tmp[32];
 		GetEntPropString(monster, Prop_Data, "m_iName", tmp, sizeof(tmp));
-		new monster_tmp = StringToInt(tmp);
+		int monster_tmp = StringToInt(tmp);
 			
-		decl String:targetname[32];
+		char targetname[32];
 		GetEntPropString(monster_tmp, Prop_Data, "m_iName", targetname, sizeof(targetname));
 		
 		if (StrEqual(targetname, ""))
 		{
-			new String:edictname[32];
+			char edictname[32];
 			GetEdictClassname(other, edictname, 32);
 
 			if (StrEqual("weapon_deagle", edictname) || StrEqual("func_buyzone", edictname))
 			{
-				new weapon = CreateEntityByName("prop_dynamic_ornament");
+				int weapon = CreateEntityByName("prop_dynamic_ornament");
 				DispatchKeyValue(weapon, "model", "models/weapons/w_pistol.mdl");
 				DispatchKeyValue(weapon, "classname", "Deagle");
 				DispatchSpawn(weapon);
 				
-				decl String:entIndex[6];
+				char entIndex[6];
 				IntToString(weapon, entIndex, sizeof(entIndex)-1);
 				
 				DispatchKeyValue(monster_tmp, "targetname", entIndex);
@@ -110,7 +114,7 @@ public Action:Barney_Touch(monster, other)
 				|| StrEqual(edictname, "player")
 				|| StrEqual(edictname, "phys_magnet"))
 			{
-				decl String:entIndex[6];
+				char entIndex[6];
 				IntToString(other, entIndex, sizeof(entIndex)-1);
 				
 				DispatchKeyValue(monster_tmp, "targetname", entIndex);
@@ -135,18 +139,20 @@ public Action:Barney_Touch(monster, other)
 	BarneyAttackThink
 	------------------------------------------------------------------------------------------
 */
-public Action:BarneySeekThink(Handle:timer, any:monsterRef)
+public Action BarneySeekThink(Handle timer, any monsterRef)
 {
-	new monster = EntRefToEntIndex(monsterRef);
+	int monster = EntRefToEntIndex(monsterRef);
 	
 	if (monster != INVALID_ENT_REFERENCE && IsValidEntity(monster))
 	{
-		decl String:tmp[32];
+		char tmp[32];
 		GetEntPropString(monster, Prop_Data, "m_iName", tmp, sizeof(tmp));
-		new monster_tmp = StringToInt(tmp);
+		int monster_tmp = StringToInt(tmp);
 		
-		new target = BaseNPC_GetTarget(monster);
-		decl Float:vClientPosition[3], Float:vEntPosition[3], Float:vAngle[3];
+		int target = BaseNPC_GetTarget(monster);
+		float vClientPosition[3];
+		float vEntPosition[3];
+		float vAngle[3];
 		
 		GetEntPropVector(monster, Prop_Send, "m_vecOrigin", vEntPosition);
 		
@@ -154,11 +160,11 @@ public Action:BarneySeekThink(Handle:timer, any:monsterRef)
 		{
 			GetClientEyePosition(target, vClientPosition);
 			
-			decl String:targetname[32];
+			char targetname[32];
 			GetEntPropString(monster_tmp, Prop_Data, "m_iName", targetname, sizeof(targetname));
-			new Float:distance = GetVectorDistance(vClientPosition, vEntPosition, false);
+			float distance = GetVectorDistance(vClientPosition, vEntPosition, false);
 			
-			decl String:weaponClass[32];
+			char weaponClass[32];
 			GetEdictClassname(StringToInt(targetname), weaponClass, 16);
 			
 			if (distance < 120.0 && BaseNPC_CanSeeEachOther(monster, target))
@@ -196,7 +202,7 @@ public Action:BarneySeekThink(Handle:timer, any:monsterRef)
 			}
 			else if (!StrEqual(targetname, "") && !StrEqual(weaponClass, "Deagle"))
 			{
-				new prop = StringToInt(targetname);
+				int prop = StringToInt(targetname);
 				BaseNPC_SetAnimation(monster, "throw1");
 				AcceptEntityInput(prop, "ClearParent");
 	
@@ -235,13 +241,13 @@ public Action:BarneySeekThink(Handle:timer, any:monsterRef)
 	BarneyIdleThink
 	------------------------------------------------------------------------------------------
 */
-public Action:BarneyIdleThink(Handle:timer, any:monsterRef)
+public Action BarneyIdleThink(Handle timer, any monsterRef)
 {
-	new monster = EntRefToEntIndex(monsterRef);
+	int monster = EntRefToEntIndex(monsterRef);
 	
 	if (monster != INVALID_ENT_REFERENCE && IsValidEntity(monster))
 	{
-		decl Float:vEntPosition[3];
+		float vEntPosition[3];
 		GetEntPropVector(monster, Prop_Send, "m_vecOrigin", vEntPosition);
 		
 		BaseNPC_PlaySound(monster, "vo/npc/Barney/ba_oldtimes.wav");
@@ -257,7 +263,7 @@ public Action:BarneyIdleThink(Handle:timer, any:monsterRef)
 	HeadCrabDamageHook
 	------------------------------------------------------------------------------------------
 */
-public Action:BarneyDamageHook(monster, &attacker, &inflictor, &Float:damage, &damagetype)
+public Action BarneyDamageHook(int monster, int& attacker, int& inflictor, float& damage, int& damagetype)
 {
 	if (BaseNPC_Hurt(monster, attacker, RoundToZero(damage), "vo/npc/Barney/ba_pain09.wav"))
 	{
@@ -265,7 +271,7 @@ public Action:BarneyDamageHook(monster, &attacker, &inflictor, &Float:damage, &d
 
 		BaseNPC_Death(monster, attacker);
 		
-		decl Float:position[3];
+		float position[3];
 		GetEntPropVector(monster, Prop_Send, "m_vecOrigin", position);
 		BaseNPC_PlaySound(monster, "vo/npc/Barney/ba_no01.wav");
 		

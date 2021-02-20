@@ -8,23 +8,23 @@
 */
 
 // Admin Flags
-new Handle:gAdminFlagWeapons;
+Handle gAdminFlagWeapons;
 
-new gExplosive1;
-new gMarkerSprite;
+int gExplosive1;
+int gMarkerSprite;
 
-new Float:gRocketSpeed;
-new gRocketDamage;
-new Float:gPlasmaSpeed;
-new gPlasmaDamage;
-new Float:gBulletSpeed;
-new gBulletDamage;
-new Float:gMineTimer;
-new gMineDamage;
+float gRocketSpeed;
+int gRocketDamage;
+float gPlasmaSpeed;
+int gPlasmaDamage;
+float gBulletSpeed;
+int gBulletDamage;
+float gMineTimer;
+int gMineDamage;
 
 #include "FixedWeapons/BaseFixed.sp"
 
-public InitWeapons()
+public void InitWeapons()
 {
 	gLaser1 = PrecacheModel("materials/sprites/laser.vmt");
 	gSmoke1 = PrecacheModel("materials/effects/fire_cloud1.vmt");
@@ -50,7 +50,7 @@ public InitWeapons()
 	{
 		if (KvGotoFirstSubKey(kv, false))
 		{
-			decl String:sectionName[32];
+			char sectionName[32];
 			do
 			{
 				KvGetSectionName(kv, sectionName, sizeof(sectionName));
@@ -91,7 +91,7 @@ public InitWeapons()
 	FixedBase_Init();
 }
 
-public RegWeaponsCommands()
+public void RegWeaponsCommands()
 {
 	gAdminFlagWeapons = CreateConVar("sm_entcontrol_weapons_fl", "z", "The needed Flag to use weapons");
 	RegConsoleCmd("sm_entcontrol_weapon_rocket", Command_Rocket, "Shoot Rocket");
@@ -107,9 +107,10 @@ public RegWeaponsCommands()
 	Projectile
 	------------------------------------------------------------------------------------------
 */
-stock Projectile(bool:homing, client, Float:position[3], Float:direction[3], String:model[128], Float:speed, damage, String:soundFire[128]="", bool:heavyProjectile=false, Float:color[3]={1.0, 1.0, 1.0})
+stock void Projectile(bool homing, int client, float position[3], float direction[3], char model[128], float speed, int damage, char soundFire[128] = "", bool heavyProjectile = false, float color[3] = {1.0, 1.0, 1.0})
 {
-	new Float:anglevector[3], Float:resultposition[3], entity;
+	float anglevector[3], resultposition[3];
+	int entity;
 	
 	GetAngleVectors(direction, anglevector, NULL_VECTOR, NULL_VECTOR);
 	//NormalizeVector(anglevector, anglevector);
@@ -145,8 +146,8 @@ stock Projectile(bool:homing, client, Float:position[3], Float:direction[3], Str
 	// Spawn it
 	DispatchSpawn(entity);
 	
-	new Float:vecmax[3] = {4.0, 4.0, 4.0};
-	new Float:vecmin[3] = {-4.0, -4.0, -4.0};
+	float vecmax[3] = {4.0, 4.0, 4.0};
+	float vecmin[3] = {-4.0, -4.0, -4.0};
 	SetEntPropVector(entity, Prop_Send, "m_vecMins", vecmin);
 	SetEntPropVector(entity, Prop_Send, "m_vecMaxs", vecmax);
 	
@@ -158,7 +159,7 @@ stock Projectile(bool:homing, client, Float:position[3], Float:direction[3], Str
 
 		if (heavyProjectile)
 		{
-			new gascloud = CreateEntityByName("env_rockettrail");
+			int gascloud = CreateEntityByName("env_rockettrail");
 			DispatchKeyValueVector(gascloud,"Origin", resultposition);
 			DispatchKeyValueVector(gascloud,"Angles", direction);
 			SetEntPropVector(gascloud, Prop_Send, "m_StartColor", color);
@@ -173,7 +174,7 @@ stock Projectile(bool:homing, client, Float:position[3], Float:direction[3], Str
 			SetEntPropFloat(gascloud, Prop_Send, "m_flFlareScale", 1.0);
 			DispatchSpawn(gascloud);
 
-			decl String:entIndex[64];
+			char entIndex[64];
 			IntToString(entity, entIndex, sizeof(entIndex));
 			DispatchKeyValue(entity, "targetname", entIndex);
 			SetVariantString(entIndex);
@@ -205,7 +206,7 @@ stock Projectile(bool:homing, client, Float:position[3], Float:direction[3], Str
 	
 	if (homing)
 	{
-		new Handle:data;
+		Handle data;
 		CreateDataTimer(0.1, Projectile_Think, data, TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE);
 		WritePackCell(data, EntIndexToEntRef(entity));
 		WritePackFloat(data, speed);
@@ -214,7 +215,7 @@ stock Projectile(bool:homing, client, Float:position[3], Float:direction[3], Str
 		if (client > 0)
 		{
 			// Make Viewpunch
-			new Float:angle[3] = {0.0, 0.0, 0.0};
+			float angle[3] = {0.0, 0.0, 0.0};
 
 			angle[0] = -6.0;
 			angle[1] = GetRandomFloat(-2.0, 2.0);
@@ -229,7 +230,7 @@ stock Projectile(bool:homing, client, Float:position[3], Float:direction[3], Str
 		EmitSoundToAll(soundFire, client, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL, -1, position);
 }
 
-public Action:Projectile_TouchHook(entity, other)
+public Action Projectile_TouchHook(int entity, int other)
 {
 	if (other != 0)
 	{
@@ -244,7 +245,7 @@ public Action:Projectile_TouchHook(entity, other)
 	return (Plugin_Continue);
 }
 
-public Action:Projectile_DamageHook(entity, &attacker, &inflictor, &Float:damage, &damagetype)
+public Action Projectile_DamageHook(int entity, int& attacker, int& inflictor, float& damage, int& damagetype)
 {
 	if (GetEntProp(entity, Prop_Data, "m_takedamage") == DAMAGE_YES)
 		Projectile_Final(entity, 0);
@@ -252,10 +253,10 @@ public Action:Projectile_DamageHook(entity, &attacker, &inflictor, &Float:damage
 	return (Plugin_Continue);
 }
 
-public Action:Projectile_Think(Handle:Timer, Handle:data)
+public Action Projectile_Think(Handle Timer, Handle data)
 {
-	new entity, client;
-	new Float:speed;
+	int entity, client;
+	float speed;
 	
 	ResetPack(data);
 	entity = EntRefToEntIndex(ReadPackCell(data));
@@ -266,12 +267,17 @@ public Action:Projectile_Think(Handle:Timer, Handle:data)
 	{
 		if (IsClientConnectedIngame(client) && IsPlayerAlive(client))
 		{
-			decl Float:cleyepos[3], Float:cleyeangle[3], Float:resultposition[3], Float:entPosition[3], Float:vecangle[3], Float:angle[3];
+			float cleyepos[3];
+			float cleyeangle[3];
+			float resultposition[3];
+			float entPosition[3];
+			float vecangle[3];
+			float angle[3];
 
 			GetClientEyePosition(client, cleyepos);
 			GetClientEyeAngles(client, cleyeangle);
 
-			new Handle:traceresulthandle = INVALID_HANDLE;
+			Handle traceresulthandle = INVALID_HANDLE;
 
 			traceresulthandle = TR_TraceRayFilterEx(cleyepos, cleyeangle, MASK_SOLID, RayType_Infinite, tracerayfilterrocket, client);
 
@@ -295,7 +301,7 @@ public Action:Projectile_Think(Handle:Timer, Handle:data)
 	return (Plugin_Stop);
 }
 
-public Projectile_Final(entity, other)
+public void Projectile_Final(int entity, int other)
 {
 	SDKUnhook(entity, SDKHook_StartTouch, Projectile_TouchHook);
 	SDKUnhook(entity, SDKHook_OnTakeDamage, Projectile_DamageHook);
@@ -303,16 +309,16 @@ public Projectile_Final(entity, other)
 	if (GetEntProp(entity, Prop_Data, "m_takedamage") == DAMAGE_YES)
 	{
 		setm_takedamage(entity, DAMAGE_NO);
-		decl Float:entityposition[3];
+		float entityposition[3];
 		GetEntPropVector(entity, Prop_Send, "m_vecOrigin", entityposition);
-		new Float:damage;
+		float damage;
 		if (gameMod == HL2MP)
 			damage = 100.0;
 		else
 			damage = GetEntPropFloat(entity, Prop_Send, "m_flDamage");
-		new client = GetEntPropEnt(entity, Prop_Send, "m_hOwnerEntity");
+		int client = GetEntPropEnt(entity, Prop_Send, "m_hOwnerEntity");
 
-		new gasentity = EntRefToEntIndex(GetEntPropEnt(entity, Prop_Send, "m_hEffectEntity"));
+		int gasentity = EntRefToEntIndex(GetEntPropEnt(entity, Prop_Send, "m_hEffectEntity"));
 		if (gasentity != INVALID_ENT_REFERENCE)
 		{
 			RemoveEntity(gasentity);
@@ -338,11 +344,12 @@ public Projectile_Final(entity, other)
 	Rocketlauncher
 	------------------------------------------------------------------------------------------
 */
-public Action:Command_Rocket(client, args)
+public Action Command_Rocket(int client, int args)
 {
 	if (CanUseCMD(client, gAdminFlagWeapons))
 	{
-		new Float:clienteyeangle[3], Float:clienteyeposition[3];
+		float clienteyeangle[3];
+		float clienteyeposition[3];
 		GetClientEyeAngles(client, clienteyeangle);
 		GetClientEyePosition(client, clienteyeposition);
 		
@@ -358,22 +365,23 @@ public Action:Command_Rocket(client, args)
 	Plasma
 	------------------------------------------------------------------------------------------
 */
-public Action:Command_Plasma(client, args)
+public Action Command_Plasma(int client, int args)
 {
 	if (CanUseCMD(client, gAdminFlagWeapons))
 	{
-		new Float:clienteyeangle[3], Float:clienteyeposition[3];
+		float clienteyeangle[3];
+		float clienteyeposition[3];
 		GetClientEyeAngles(client, clienteyeangle);
 		GetClientEyePosition(client, clienteyeposition);
 		
-		Projectile(true, client, clienteyeposition, clienteyeangle, "models/Effects/combineball.mdl", gPlasmaSpeed, gPlasmaDamage, "weapons/Irifle/irifle_fire2.wav", true, Float:{0.4, 1.0, 1.0});
+		Projectile(true, client, clienteyeposition, clienteyeangle, "models/Effects/combineball.mdl", gPlasmaSpeed, gPlasmaDamage, "weapons/Irifle/irifle_fire2.wav", true, view_as<float>({0.4, 1.0, 1.0}));
 	}
 
 	return (Plugin_Handled);
 }
 
 // - Mine
-public Action:Command_Mine(client, args)
+public Action Command_Mine(int client, int args)
 {
 	if (CanUseCMD(client, gAdminFlagWeapons))
 		MineAttack(client);
@@ -381,14 +389,15 @@ public Action:Command_Mine(client, args)
 	return (Plugin_Handled);
 }
 
-stock MineAttack(client)
+stock void MineAttack(int client)
 {
-	decl Float:cleyepos[3], Float:cleyeangle[3];
+	float cleyepos[3];
+	float cleyeangle[3];
 	
 	GetClientEyePosition(client, cleyepos);
 	GetClientEyeAngles(client, cleyeangle);
 
-	new entity;
+	int entity;
 	if (gameMod == CSS || gameMod ==CSGO)
 	{
 		entity = CreateEntityByName("hegrenade_projectile");
@@ -419,20 +428,20 @@ stock MineAttack(client)
 	SDKHook(entity, SDKHook_OnTakeDamage, MineDamageHook);
 }
 
-public Action:StartMine(Handle:Timer, any:entityRef)
+public Action StartMine(Handle Timer, any entityRef)
 {
-	new mine = EntRefToEntIndex(entityRef);
+	int mine = EntRefToEntIndex(entityRef);
 	
 	if (mine != INVALID_ENT_REFERENCE)
 		MineActive(mine);
 }
 
-public Action:MineTouchHook(entity, other)
+public Action MineTouchHook(int entity, int other)
 {
-	decl Float:entityposition[3];
+	float entityposition[3];
 	GetEntPropVector(entity, Prop_Send, "m_vecOrigin", entityposition);	
 	
-	new laserent = CreateEntityByName("point_tesla");
+	int laserent = CreateEntityByName("point_tesla");
 	DispatchKeyValue(laserent, "m_flRadius", "100.0");
 	DispatchKeyValue(laserent, "m_SoundName", "DoSpark");
 	DispatchKeyValue(laserent, "beamcount_min", "42");
@@ -465,14 +474,14 @@ public Action:MineTouchHook(entity, other)
 	return (Plugin_Continue);
 }
 
-public Action:MineDamageHook(entity, &attacker, &inflictor, &Float:damage, &damagetype)
+public Action MineDamageHook(int entity, int& attacker, int& inflictor, float& damage, int& damagetype)
 {
 	MineActive(entity);
 	
 	return (Plugin_Handled);
 }
 
-stock MineActive(entity)
+stock void MineActive(int entity)
 {
 	SDKUnhook(entity, SDKHook_StartTouch, MineTouchHook);
 	SDKUnhook(entity, SDKHook_OnTakeDamage, MineDamageHook);
@@ -480,9 +489,9 @@ stock MineActive(entity)
 	if(IsValidEntity(entity) && IsValidEdict(entity))
 	{ 
 		setm_takedamage(entity, DAMAGE_NO);
-		decl Float:entityposition[3];
+		float entityposition[3];
 		GetEntPropVector(entity, Prop_Send, "m_vecOrigin", entityposition);
-		new client = GetEntPropEnt(entity, Prop_Send, "m_hOwnerEntity");
+		int client = GetEntPropEnt(entity, Prop_Send, "m_hOwnerEntity");
 
 		AcceptEntityInput(entity, "Kill");
 		
@@ -497,7 +506,7 @@ stock MineActive(entity)
 		TE_SendToAll();
 
 		// Light
-		new ent = CreateEntityByName("light_dynamic");
+		int ent = CreateEntityByName("light_dynamic");
 
 		DispatchKeyValue(ent, "_light", "120 120 255 255");
 		DispatchKeyValue(ent, "brightness", "5");
@@ -511,7 +520,7 @@ stock MineActive(entity)
 		
 		TeleportEntity(ent, entityposition, NULL_VECTOR, NULL_VECTOR);
 		
-		RemoveEntity(ent, 1.0);
+		KillEntity(ent, 1.0);
 		
 		entityposition[2] += 15.0;
 		makeexplosion(IsClientConnectedIngame(client) ? client : 0, -1, entityposition, "", gMineDamage);
@@ -521,8 +530,10 @@ stock MineActive(entity)
 		EmitSoundToAll("weapons/physcannon/energy_disintegrate4.wav", 0, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL, -1, entityposition);
 		
 		// Knockback
-		new Float:vReturn[3], Float:vClientPosition[3], Float:dist;
-		for (new i = 1; i <= MaxClients; i++)
+		float vReturn[3];
+		float vClientPosition[3];
+		float dist;
+		for (int i = 1; i <= MaxClients; i++)
 		{
 			if (IsClientConnected(i) && IsClientInGame(i) && IsPlayerAlive(i))
 			{	
@@ -549,18 +560,18 @@ stock MineActive(entity)
 	Thanks to Peace-Maker
 	------------------------------------------------------------------------------------------
 */
-public Action:Command_IonCannon(client, args)
+public Action Command_IonCannon(int client, int args)
 {
 	if (!CanUseCMD(client, gAdminFlagWeapons)) return (Plugin_Handled);
 	
-	decl Float:vAngles[3];
-	decl Float:vOrigin[3];
-	decl Float:vStart[3];
+	float vAngles[3];
+	float vOrigin[3];
+	float vStart[3];
 	
 	GetClientEyePosition(client, vOrigin);
 	GetClientEyeAngles(client, vAngles);
 	
-	new Handle:trace = TR_TraceRayFilterEx(vOrigin, vAngles, MASK_SHOT, RayType_Infinite, TraceEntityFilterPlayer);
+	Handle trace = TR_TraceRayFilterEx(vOrigin, vAngles, MASK_SHOT, RayType_Infinite, TraceEntityFilterPlayer);
     	
 	if(TR_DidHit(trace))
 	{   	 
@@ -568,7 +579,7 @@ public Action:Command_IonCannon(client, args)
 
 		CloseHandle(trace);
 
-		new Handle:data = CreateDataPack();
+		Handle data = CreateDataPack();
 		WritePackFloat(data, vStart[0]);
 		WritePackFloat(data, vStart[1]);
 		WritePackFloat(data, vStart[2]);
@@ -587,9 +598,9 @@ public Action:Command_IonCannon(client, args)
 	return (Plugin_Handled);
 }
 
-public DrawIonBeam(Float:startPosition[3])
+public void DrawIonBeam(float startPosition[3])
 {
-	decl Float:position[3];
+	float position[3];
 	position[0] = startPosition[0];
 	position[1] = startPosition[1];
 	position[2] = startPosition[2] + 1500.0;	
@@ -603,25 +614,25 @@ public DrawIonBeam(Float:startPosition[3])
 	TE_SendToAll();
 }
 
-public IonAttack(Handle:data)
+public void IonAttack(Handle data)
 {	
-	new Float:startPosition[3];
-	new Float:position[3];
+	float startPosition[3];
+	float position[3];
 	
 	ResetPack(data);
 	startPosition[0] = ReadPackFloat(data);
 	startPosition[1] = ReadPackFloat(data);
 	startPosition[2] = ReadPackFloat(data);
-	new distance = ReadPackCell(data);
-	new Float:nphi = ReadPackFloat(data);
+	int distance = ReadPackCell(data);
+	float nphi = ReadPackFloat(data);
 	
 	if (distance > 0)
 	{
 		EmitSoundToAll("ambient/energy/weld1.wav", 0, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL, -1, startPosition);
 		
 		// Stage 1
-		new Float:s=Sine(nphi/360*6.28)*distance;
-		new Float:c=Cosine(nphi/360*6.28)*distance;
+		float s=Sine(nphi/360*6.28)*distance;
+		float c=Cosine(nphi/360*6.28)*distance;
 		
 		position[0] = startPosition[0];
 		position[1] = startPosition[1];
@@ -694,7 +705,7 @@ public IonAttack(Handle:data)
 	
 	if (distance > -50)
 	{
-		new Handle:ndata;
+		Handle ndata;
 		CreateDataTimer(0.1, DrawIon, ndata, TIMER_FLAG_NO_MAPCHANGE);	
 		WritePackFloat(ndata, startPosition[0]);
 		WritePackFloat(ndata, startPosition[1]);
@@ -724,7 +735,7 @@ public IonAttack(Handle:data)
 		makeexplosion(0, -1, startPosition, "", 500);
 
 		position[2] = startPosition[2] + 50.0;
-		new Float:fDirection[3] = {-90.0,0.0,0.0};
+		float fDirection[3] = {-90.0,0.0,0.0};
 		env_shooter(fDirection, 25.0, 0.1, fDirection, 800.0, 120.0, 120.0, position, "models/props_wasteland/rockgranite03b.mdl");
 
 		env_shake(startPosition, 120.0, 10000.0, 15.0, 250.0);
@@ -742,7 +753,7 @@ public IonAttack(Handle:data)
 		TE_SendToAll();
 
 		// Light
-		new ent = CreateEntityByName("light_dynamic");
+		int ent = CreateEntityByName("light_dynamic");
 
 		DispatchKeyValue(ent, "_light", "255 255 255 255");
 		DispatchKeyValue(ent, "brightness", "5");
@@ -756,7 +767,7 @@ public IonAttack(Handle:data)
 	
 		TeleportEntity(ent, position, NULL_VECTOR, NULL_VECTOR);
 		
-		RemoveEntity(ent, 3.0);
+		KillEntity(ent, 3.0);
 		
 		// Sound
 		EmitSoundToAll("ambient/explosions/citadel_end_explosion1.wav", 0, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL, -1, startPosition);
@@ -766,8 +777,10 @@ public IonAttack(Handle:data)
 		sendfademsg(0, 10, 200, FFADE_OUT, 255, 255, 255, 150);
 		
 		// Knockback
-		new Float:vReturn[3], Float:vClientPosition[3], Float:dist;
-		for (new i = 1; i <= MaxClients; i++)
+		float vReturn[3];
+		float vClientPosition[3];
+		float dist;
+		for (int i = 1; i <= MaxClients; i++)
 		{
 			if (IsClientConnected(i) && IsClientInGame(i) && IsPlayerAlive(i))
 			{	
@@ -787,7 +800,7 @@ public IonAttack(Handle:data)
 	}
 }
 
-public Action:DrawIon(Handle:Timer, any:data)
+public Action DrawIon(Handle Timer, any data)
 {
 	IonAttack(data);
 	
@@ -800,11 +813,12 @@ public Action:DrawIon(Handle:Timer, any:data)
 	Shoots the sentrygun projectile
 	------------------------------------------------------------------------------------------
 */
-public Action:Command_Bullet(client, args)
+public Action Command_Bullet(int client, int args)
 {
 	if (!CanUseCMD(client, gAdminFlagWeapons)) return (Plugin_Handled);
 
-	decl Float:clienteyeangle[3], Float:clienteyeposition[3];
+	float clienteyeangle[3];
+	float clienteyeposition[3];
 	GetClientEyePosition(client, clienteyeposition);
 	GetClientEyeAngles(client, clienteyeangle);
 	
@@ -819,7 +833,7 @@ public Action:Command_Bullet(client, args)
 	Thanks to Thrawn2
 	------------------------------------------------------------------------------------------
 */
-public Action:Command_TVMissile(client, args)
+public Action Command_TVMissile(int client, int args)
 {
 	if (CanUseCMD(client, gAdminFlagWeapons))
 		TVMissile(client);
@@ -827,11 +841,12 @@ public Action:Command_TVMissile(client, args)
 	return (Plugin_Handled);
 }
 
-new gTV[MAXPLAYERS+1], gTVMissile[MAXPLAYERS+1];
-stock TVMissile(client)
+int gTV[MAXPLAYERS+1], gTVMissile[MAXPLAYERS+1];
+stock void TVMissile(int client)
 {
-	decl Float:clienteyeangle[3], Float:anglevector[3], Float:clienteyeposition[3], Float:resultposition[3], entity;
-	decl String:steamid[64];
+	float clienteyeangle[3], anglevector[3], clienteyeposition[3], resultposition[3];
+	int entity;
+	char steamid[64];
 	GetClientEyeAngles(client, clienteyeangle);
 	GetClientEyePosition(client, clienteyeposition);
 	GetAngleVectors(clienteyeangle, anglevector, NULL_VECTOR, NULL_VECTOR);
@@ -841,7 +856,7 @@ stock TVMissile(client)
 	NormalizeVector(anglevector, anglevector);
 	ScaleVector(anglevector, 1500.0);
 	
-	GetClientAuthString(client, steamid, 64);
+	GetClientAuthId(client, AuthId_Steam2, steamid, 64);
 	Format(steamid, 64, "%s%f", steamid, GetGameTime());
 
 	if (gameMod == CSS || gameMod ==CSGO)
@@ -875,17 +890,17 @@ stock TVMissile(client)
 		
 		if (gameMod != HL2MP && gameMod != OBSIDIAN)
 		{
-			new Float:vecmax[3] = {4.0, 4.0, 4.0};
-			new Float:vecmin[3] = {-4.0, -4.0, -4.0};
+			float vecmax[3] = {4.0, 4.0, 4.0};
+			float vecmin[3] = {-4.0, -4.0, -4.0};
 			SetEntPropVector(entity, Prop_Send, "m_vecMins", vecmin);
 			SetEntPropVector(entity, Prop_Send, "m_vecMaxs", vecmax);
 			
 			SetEntityModel(entity, "models/weapons/w_missile_launch.mdl");
 
-			new gascloud = CreateEntityByName("env_rockettrail");
+			int gascloud = CreateEntityByName("env_rockettrail");
 			DispatchKeyValueVector(gascloud,"Origin", resultposition);
 			DispatchKeyValueVector(gascloud,"Angles", clienteyeangle);
-			new Float:smokecolor[3] = {1.0, 1.0, 1.0};
+			float smokecolor[3] = {1.0, 1.0, 1.0};
 			SetEntPropVector(gascloud, Prop_Send, "m_StartColor", smokecolor);
 			SetEntPropFloat(gascloud, Prop_Send, "m_Opacity", 0.5);
 			SetEntPropFloat(gascloud, Prop_Send, "m_SpawnRate", 100.0);
@@ -911,7 +926,7 @@ stock TVMissile(client)
 		
 		setm_takedamage(entity, DAMAGE_YES);
 	 
-		new Float:angle[3] = {0.0, 0.0, 0.0};
+		float angle[3] = {0.0, 0.0, 0.0};
 
 		angle[0] = -6.0;
 		angle[1] = GetRandomFloat(-2.0, 2.0);
@@ -920,12 +935,12 @@ stock TVMissile(client)
 		SetEntProp(client, Prop_Send, "m_iFOV", 60);
 		
 		// TV Missile
-		decl String:entIndex[6];
+		char entIndex[6];
 		IntToString(client, entIndex, sizeof(entIndex)-1);
 		
 		SetEntProp(client, Prop_Send, "m_iObserverMode", 1);
 		
-		new tv = CreateEntityByName("point_viewcontrol");
+		int tv = CreateEntityByName("point_viewcontrol");
 		DispatchKeyValue(tv, "spawnflags", "72");
 		DispatchKeyValue(client, "targetname", entIndex);
 		DispatchSpawn(tv);
@@ -942,7 +957,7 @@ stock TVMissile(client)
 		LogError("TVMissile(...)->Unable to create TV-Missile");
 }
 
-public OnPreThink(client)
+public void OnPreThink(int client)
 {
 	if(IsClientConnectedIngame(client))
 	{
@@ -950,7 +965,9 @@ public OnPreThink(client)
 		{
 			if (IsValidEdict(gTVMissile[client]) && IsValidEntity(gTVMissile[client]))
 			{
-				decl Float:cleyeangle[3], Float:rocketposition[3], Float:vecangle[3];
+				float cleyeangle[3];
+				float rocketposition[3];
+				float vecangle[3];
 
 				GetClientEyeAngles(client, cleyeangle);
 				GetEntPropVector(gTVMissile[client], Prop_Send, "m_vecOrigin", rocketposition);
@@ -974,7 +991,7 @@ public OnPreThink(client)
 				{
 					gNextPickup[client] = GetGameTime() + 0.5;
 					
-					for (new i=1; i <= MaxClients; i++)
+					for (int i=1; i <= MaxClients; i++)
 					{
 						if (IsClientConnectedIngame(i) && !IsFakeClient(i))
 						{
@@ -1001,7 +1018,7 @@ public OnPreThink(client)
 	}
 }
 
-public Action:TVMissileTouchHook(entity, other)
+public Action TVMissileTouchHook(int entity, int other)
 {
 	if(other != 0)
 	{
@@ -1014,7 +1031,7 @@ public Action:TVMissileTouchHook(entity, other)
 	return (Plugin_Continue);
 }
 
-public Action:TVMissileDamageHook(entity, &attacker, &inflictor, &Float:damage, &damagetype)
+public Action TVMissileDamageHook(int entity, int& attacker, int& inflictor, float& damage, int& damagetype)
 {
 	if(GetEntProp(entity, Prop_Data, "m_takedamage") == DAMAGE_YES)
 		TVMissileActive(entity);
@@ -1022,7 +1039,7 @@ public Action:TVMissileDamageHook(entity, &attacker, &inflictor, &Float:damage, 
 	return (Plugin_Continue);
 }
 
-stock TVMissileResetClientView(client)
+stock void TVMissileResetClientView(int client)
 {
 	SetEntProp(client, Prop_Send, "m_iObserverMode", 0);
 	SetEntProp(client, Prop_Send, "m_bDrawViewmodel", 1);
@@ -1037,18 +1054,18 @@ stock TVMissileResetClientView(client)
 	}
 }
 
-stock TVMissileActive(entity)
+stock void TVMissileActive(int entity)
 {
 	SDKUnhook(entity, SDKHook_StartTouch, TVMissileTouchHook);
 	SDKUnhook(entity, SDKHook_OnTakeDamage, TVMissileDamageHook);
 
 	if (IsValidEdict(entity) && IsValidEntity(entity))
 	{
-		decl Float:entityposition[3];
+		float entityposition[3];
 		GetEntPropVector(entity, Prop_Send, "m_vecOrigin", entityposition);
-		new client = GetEntPropEnt(entity, Prop_Send, "m_hOwnerEntity");
+		int client = GetEntPropEnt(entity, Prop_Send, "m_hOwnerEntity");
 
-		new gasentity = GetEntPropEnt(entity, Prop_Send, "m_hEffectEntity");
+		int gasentity = GetEntPropEnt(entity, Prop_Send, "m_hEffectEntity");
 		AcceptEntityInput(gasentity, "kill");
 		AcceptEntityInput(entity, "Kill");
 		entityposition[2] = entityposition[2] + 15.0;

@@ -6,10 +6,10 @@
 	------------------------------------------------------------------------------------------
 */
 
-new gRedPortal;
-new gPortalWarp;
+int gRedPortal;
+int gPortalWarp;
 
-public Portal_Init()
+public void Portal_Init()
 {
 	PrecacheSound("ambient/energy/force_field_loop1.wav");
 	PrecacheSound("beams/beamstart5.wav");
@@ -18,40 +18,43 @@ public Portal_Init()
 	PrecacheModel("models/effects/portalrift.mdl");
 }
 
-public Portal_Shoot(client)
+public void Portal_Shoot(int client)
 {
-	new Float:vAimPos[3], Float:vAimAngle[3];
+	float vAimPos[3];
+	float vAimAngle[3];
 	if (GetPlayerEyeWithAngle(client, vAimPos, vAimAngle))
 		Portal_Create(vAimPos, vAimAngle);
 	else
 		PrintToChat(client, "{fullred}Failed to create portal");
 }
 
-public Portal_Create(Float:vPos[3], Float:vAimAngle[3])
+public void Portal_Create(float vPos[3], float vAimAngle[3])
 {
-	new Float:vAngle[3];
+	float vAngle[3];
 	GetAngleVectors(vAimAngle, vAngle, NULL_VECTOR, NULL_VECTOR);
 	NormalizeVector(vAngle, vAngle);
 	ScaleVector(vAngle, 5.0);
 	AddVectors(vPos, vAngle, vPos);
 	
-	new portal = Portal_CreatePortal(vPos, vAimAngle);
+	int portal = Portal_CreatePortal(vPos, vAimAngle);
 	if (portal == -1)
 		return;
-	new cam = Portal_CreateCamera(vPos, vAimAngle);
+	int cam = Portal_CreateCamera(vPos, vAimAngle);
 	
 	Portal_CreateInfoCameraLink(portal, cam);
 }
 
-public bool:Portal_EnoughSpaceForHuman(Float:vBluePortalPos[3], Float:vAimAngle[3])
+public bool Portal_EnoughSpaceForHuman(float vBluePortalPos[3], float vAimAngle[3])
 {
-	decl Float:vMin[3], Float:vMax[3]; 
+	float vMin[3];
+	float vMax[3];
 
 	// To get the mods client-size
 	GetClientMins(1, vMin); 
 	GetClientMaxs(1, vMax); 
 
-	new Float:vOrigin[3], Float:vAngle[3];
+	float vOrigin[3];
+	float vAngle[3];
 	vOrigin[0] = vBluePortalPos[0];
 	vOrigin[1] = vBluePortalPos[1];
 	vOrigin[2] = vBluePortalPos[2];
@@ -88,14 +91,14 @@ public bool:Portal_EnoughSpaceForHuman(Float:vBluePortalPos[3], Float:vAimAngle[
 	return (true);
 }
 
-public bool:TraceHullForRoom(entity, contentsMask) 
+public bool TraceHullForRoom(int entity, int contentsMask) 
 { 
     return (true); 
 }  
 
-public Portal_CreatePortal(Float:vBluePortalPos[3], Float:vAimAngle[3])
+public int Portal_CreatePortal(float vBluePortalPos[3], float vAimAngle[3])
 {
-	decl String:sPortal[6];
+	char sPortal[6];
 
 	if (!Portal_EnoughSpaceForHuman(vBluePortalPos, vAimAngle))
 	{
@@ -103,7 +106,7 @@ public Portal_CreatePortal(Float:vBluePortalPos[3], Float:vAimAngle[3])
 		return (-1);
 	}
 
-	new bluePortal = CreateEntityByName("prop_dynamic");
+	int bluePortal = CreateEntityByName("prop_dynamic");
 	if (bluePortal != -1)
 	{
 		IntToString(bluePortal, sPortal, sizeof(sPortal)-1);
@@ -128,8 +131,8 @@ public Portal_CreatePortal(Float:vBluePortalPos[3], Float:vAimAngle[3])
 		
 		if (gRedPortal && IsValidEdict(gRedPortal) && IsValidEntity(gRedPortal))
 		{
-			new redDestination = Portal_CreateDestination(gRedPortal);
-			new blueDestination = Portal_CreateDestination(bluePortal);
+			int redDestination = Portal_CreateDestination(gRedPortal);
+			int blueDestination = Portal_CreateDestination(bluePortal);
 			Portal_CreateTeler(bluePortal, redDestination);
 			Portal_CreateTeler(gRedPortal, blueDestination);
 
@@ -144,12 +147,13 @@ public Portal_CreatePortal(Float:vBluePortalPos[3], Float:vAimAngle[3])
 	return (bluePortal);
 }
 
-public Portal_CreateDestination(portal)
+public int Portal_CreateDestination(int portal)
 {
-	new Float:vPos[3], Float:vAngle[3];
-	new target = CreateEntityByName("info_target");
+	float vPos[3];
+	float vAngle[3];
+	int target = CreateEntityByName("info_target");
 
-	decl String:sTargetName[64];
+	char sTargetName[64];
 	IntToString(target, sTargetName, sizeof(sTargetName)-1);
 	DispatchKeyValue(target, "spawnflags", "0");
 	DispatchKeyValue(target, "targetname", sTargetName);
@@ -172,11 +176,11 @@ public Portal_CreateDestination(portal)
 	return (target);
 }
 
-public Portal_CreateTeler(portal, target)
+public int Portal_CreateTeler(int portal, int target)
 {
-	new trigger = CreateEntityByName("trigger_teleport");
+	int trigger = CreateEntityByName("trigger_teleport");
 
-	decl String:sTargetName[64];
+	char sTargetName[64];
 	IntToString(target, sTargetName, sizeof(sTargetName)-1);
 	DispatchKeyValue(trigger, "spawnflags", "5184");
 	DispatchKeyValue(trigger, "StartDisabled", "0");
@@ -188,20 +192,20 @@ public Portal_CreateTeler(portal, target)
 	// WTF?! xD
 	SetEntityModel(trigger, "models/effects/portalrift.mdl");
 
-	new Float:minbounds[3] = {-50.0, -50.0, 0.0};
-	new Float:maxbounds[3] = {40.0, 20.0, 100.0};
+	float minbounds[3] = {-50.0, -50.0, 0.0};
+	float maxbounds[3] = {40.0, 20.0, 100.0};
 	SetEntPropVector(trigger, Prop_Send, "m_vecMins", minbounds);
 	SetEntPropVector(trigger, Prop_Send, "m_vecMaxs", maxbounds);
 
 	SetEntProp(trigger, Prop_Send, "m_nSolidType", 2);
 
 	
-	new enteffects = GetEntProp(trigger, Prop_Send, "m_fEffects");
+	int enteffects = GetEntProp(trigger, Prop_Send, "m_fEffects");
 	enteffects |= 32;
 	SetEntProp(trigger, Prop_Send, "m_fEffects", enteffects); 
 	
 	
-	new Float:vPos[3];
+	float vPos[3];
 	GetEntPropVector(portal, Prop_Send, "m_vecOrigin", vPos);
 	vPos[2] -= 40.0;
 	TeleportEntity(trigger, vPos, NULL_VECTOR, NULL_VECTOR);
@@ -214,7 +218,7 @@ public Portal_CreateTeler(portal, target)
 	EmitSoundToAll("ambient/energy/force_field_loop1.wav", 0, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL, -1, vPos);
 	
 	// Light
-	new light = CreateEntityByName("light_dynamic");
+	int light = CreateEntityByName("light_dynamic");
 
 	DispatchKeyValue(light, "_light", "200 255 200 255");
 	DispatchKeyValue(light, "brightness", "1");
@@ -228,7 +232,7 @@ public Portal_CreateTeler(portal, target)
 	TeleportEntity(light, vPos, NULL_VECTOR, NULL_VECTOR);
 	
 	// Implode/Explode xD
-	new point_push = CreateEntityByName("point_push");
+	int point_push = CreateEntityByName("point_push");
 	DispatchKeyValue(point_push, "enabled", "1");
 	DispatchKeyValue(point_push, "magnitude", "25.0");
 	DispatchKeyValue(point_push, "radius", "250.0");
@@ -242,7 +246,7 @@ public Portal_CreateTeler(portal, target)
 	return (trigger);
 }
 
-public Action:Portal_StartTouch(entity, other)
+public Action Portal_StartTouch(int entity, int other)
 {
 	/*
 	new Float:vecOrigin[3], Float:vecMins[3], Float:vecMaxs[3];
@@ -262,7 +266,7 @@ public Action:Portal_StartTouch(entity, other)
 	}
 	*/
 	
-	new Float:pos[3];
+	float pos[3];
 	GetEntPropVector(other, Prop_Send, "m_vecOrigin", pos);
 	
 	if (GetEntPropFloat(other, Prop_Data, "m_flLastPhysicsInfluenceTime") + 1.5 > GetEngineTime()) // half a second cooldown
@@ -279,22 +283,22 @@ public Action:Portal_StartTouch(entity, other)
 	return (Plugin_Continue);
 }
 
-public bool:TraceEntityFilterNotItself(iEntity, iContentsMask, any:entity) 
+public bool TraceEntityFilterNotItself(int iEntity, int iContentsMask, any entity) 
 { 
     return (iEntity != entity); 
 }  
 
-public Portal_OnTouching(const String:output[], caller, activator, Float:delay)
+public void Portal_OnTouching(const char[] output, int caller, int activator, float delay)
 {
 	if (activator > 0)
 	{
 		if (activator <= MaxClients)
 			sendfademsg(activator, 50, 50, FFADE_OUT, 200, 255, 200, 255);
 		
-		new Float:timeNow = GetEngineTime();
+		float timeNow = GetEngineTime();
 		if (GetEntPropFloat(activator, Prop_Data, "m_flLastPhysicsInfluenceTime") + 1.49 < timeNow) // half a second cooldown
 		{
-			new Float:vPos[3];
+			float vPos[3];
 			GetEntPropVector(activator, Prop_Send, "m_vecOrigin", vPos);
 			EmitSoundToAll("beams/beamstart5.wav", 0, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL, -1, vPos);
 			
@@ -315,9 +319,9 @@ public Portal_OnTouching(const String:output[], caller, activator, Float:delay)
 	}
 }
 
-public Action:Portal_ResizeToNormal(Handle:Timer, any:entityRef)
+public Action Portal_ResizeToNormal(Handle Timer, any entityRef)
 {
-	new entity = EntRefToEntIndex(entityRef);
+	int entity = EntRefToEntIndex(entityRef);
 
 	if (entity != INVALID_ENT_REFERENCE)
 	{
@@ -342,9 +346,9 @@ public Action:Portal_StopAnimation(Handle:Timer, any:portalRef)
 	Not possible :-/
 	------------------------------------------------------------------------------------------
 */
-public Portal_CreateCamera(Float:vCamPos[3], Float:vAimAngle[3])
+public int Portal_CreateCamera(float vCamPos[3], float vAimAngle[3])
 {
-	decl String:sCamera[6];
+	char sCamera[6];
 	
 	/*
 	vAngle[0] = 0.0;
@@ -355,7 +359,7 @@ public Portal_CreateCamera(Float:vCamPos[3], Float:vAimAngle[3])
 	AddVectors(vPos, vAngle, vPos);
 	*/
 	
-	new cam = CreateEntityByName("point_camera");
+	int cam = CreateEntityByName("point_camera");
 	if (cam != -1)   
 	{
 		IntToString(EntIndexToEntRef(cam), sCamera, sizeof(sCamera)-1);
@@ -367,7 +371,7 @@ public Portal_CreateCamera(Float:vCamPos[3], Float:vAimAngle[3])
 		
 		//AcceptEntityInput(cam, "SetOnAndTurnOthersOff");
 		
-		new ent = -1;  
+		int ent = -1;  
 		while ((ent = FindEntityByClassname(ent, "func_monitor")) != -1)  
 		{  
 			SetVariantString(sCamera);
@@ -382,13 +386,14 @@ public Portal_CreateCamera(Float:vCamPos[3], Float:vAimAngle[3])
 	return (cam);
 }
 
-public Portal_CreateInfoCameraLink(monitor, camera)
+public int Portal_CreateInfoCameraLink(int monitor, int camera)
 {
-	decl String:sMonitorName[64], String:sCameraName[64];
+	char sMonitorName[64];
+	char sCameraName[64];
 	GetEntPropString(monitor, Prop_Data, "m_iName", sMonitorName, 64);
 	GetEntPropString(camera, Prop_Data, "m_iName", sCameraName, 64);
 	
-	new link = CreateEntityByName("info_camera_link");
+	int link = CreateEntityByName("info_camera_link");
 	DispatchKeyValue(link, "m_hTargetEntity", sMonitorName);
 	DispatchSpawn(link);
 	//ActivateEntity(link);

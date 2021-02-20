@@ -1,3 +1,7 @@
+/* put the line below after all of the includes!
+#pragma newdecls required
+*/
+
 /* 
 	------------------------------------------------------------------------------------------
 	EntControl::AntLionGuard
@@ -7,7 +11,9 @@
 	------------------------------------------------------------------------------------------
 */
 
-public InitAntlionGuard()
+#pragma newdecls required
+
+public void InitAntlionGuard()
 {
 	PrecacheModel("models/antlion_guard.mdl");
 	PrecacheSound("npc/antlion_guard/foot_heavy2.wav");
@@ -20,15 +26,15 @@ public InitAntlionGuard()
 	Command_AntlionGuard
 	------------------------------------------------------------------------------------------
 */
-public Action:Command_AntlionGuard(client, args)
+public Action Command_AntlionGuard(int client, int args)
 {
 	if (!CanUseCMD(client, gAdminFlagNPC)) return (Plugin_Handled);
 	
-	decl Float:position[3];
-	if(GetPlayerEye(client, position))
+	float position[3];
+	if (GetPlayerEye(client, position))
 		AntLionGuard_Spawn(position);
 	else
-		PrintHintText(client, "%t", "Wrong entity"); 
+		PrintHintText(client, "%t", "Wrong entity");
 
 	return (Plugin_Handled);
 }
@@ -38,10 +44,10 @@ public Action:Command_AntlionGuard(client, args)
 	AntLionGuard_Spawn
 	------------------------------------------------------------------------------------------
 */
-public AntLionGuard_Spawn(Float:position[3])
+public void AntLionGuard_Spawn(float position[3])
 {
 	// Spawn
-	new monster = BaseNPC_Spawn(position, "models/antlion_guard.mdl", AntlionGuardSeekThink, "npc_antlionguard", "idle");
+	int monster = BaseNPC_Spawn(position, "models/antlion_guard.mdl", AntlionGuardSeekThink, "npc_antlionguard", "idle");
 
 	SDKHook(monster, SDKHook_OnTakeDamage, AntlionGuardDamageHook);
 
@@ -53,16 +59,18 @@ public AntLionGuard_Spawn(Float:position[3])
 	AntlionGuardFireThink
 	------------------------------------------------------------------------------------------
 */
-public Action:AntlionGuardFireThink(Handle:timer, any:monsterRef)
+public Action AntlionGuardFireThink(Handle timer, any monsterRef)
 {
-	new monster = EntRefToEntIndex(monsterRef);
+	int monster = EntRefToEntIndex(monsterRef);
 		
 	if (monster != INVALID_ENT_REFERENCE && BaseNPC_IsAlive(monster))
 	{
-		new target = BaseNPC_GetTarget(monster);
+		int target = BaseNPC_GetTarget(monster);
 		if (target > 0)
 		{
-			new Float:vClientPosition[3], Float:vEntPosition[3], Float:vAngle[3];
+			float vClientPosition[3];
+			float vEntPosition[3];
+			float vAngle[3];
 			
 			GetClientEyePosition(target, vClientPosition);
 			GetEntPropVector(monster, Prop_Send, "m_vecOrigin", vEntPosition);
@@ -77,13 +85,13 @@ public Action:AntlionGuardFireThink(Handle:timer, any:monsterRef)
 				NormalizeVector(vAngle, vAngle);
 				GetVectorAngles(vAngle, vAngle);
 		
-				new String:tName[128];
+				char tName[128];
 				Format(tName, sizeof(tName), "target%i", monsterRef);
 				
 				// Create the Flame
-				new String:flame_name[128];
+				char flame_name[128];
 				Format(flame_name, sizeof(flame_name), "Flame%i", monsterRef);
-				new flame = CreateEntityByName("env_steam");
+				int flame = CreateEntityByName("env_steam");
 				DispatchKeyValue(flame,"targetname", flame_name);
 				DispatchKeyValue(flame, "parentname", tName);
 				DispatchKeyValue(flame,"SpawnFlags", "1");
@@ -107,9 +115,9 @@ public Action:AntlionGuardFireThink(Handle:timer, any:monsterRef)
 				AcceptEntityInput(flame, "TurnOn");
 
 				// Create the Heat Plasma
-				new String:flame_name2[128];
+				char flame_name2[128];
 				Format(flame_name2, sizeof(flame_name2), "Flame2%i", monsterRef);
-				new flame2 = CreateEntityByName("env_steam");
+				int flame2 = CreateEntityByName("env_steam");
 				DispatchKeyValue(flame2,"targetname", flame_name2);
 				DispatchKeyValue(flame2, "parentname", tName);
 				DispatchKeyValue(flame2,"SpawnFlags", "1");
@@ -126,7 +134,7 @@ public Action:AntlionGuardFireThink(Handle:timer, any:monsterRef)
 				SetVariantString(tName);
 				AcceptEntityInput(flame2, "SetParent", flame2, flame2, 0);
 				
-				new Handle:flamedata;
+				Handle flamedata;
 				CreateDataTimer(1.0, KillFlame, flamedata);
 				WritePackCell(flamedata, flame);
 				WritePackCell(flamedata, flame2);
@@ -149,15 +157,15 @@ public Action:AntlionGuardFireThink(Handle:timer, any:monsterRef)
 	KillFlame
 	------------------------------------------------------------------------------------------
 */
-public Action:KillFlame(Handle:timer, Handle:flamedata)
+public Action KillFlame(Handle timer, Handle flamedata)
 {
 	ResetPack(flamedata);
-	new ent1 = ReadPackCell(flamedata);
-	new ent2 = ReadPackCell(flamedata);
-	new monster = EntRefToEntIndex(ReadPackCell(flamedata));
+	int ent1 = ReadPackCell(flamedata);
+	int ent2 = ReadPackCell(flamedata);
+	int monster = EntRefToEntIndex(ReadPackCell(flamedata));
 	CloseHandle(flamedata);
 	
-	new String:classname[256];
+	char classname[256];
 	
 	if (IsValidEdict(ent1) && IsValidEntity(ent1))
     {
@@ -183,13 +191,13 @@ public Action:KillFlame(Handle:timer, Handle:flamedata)
 	AntlionGuardSeekThink
 	------------------------------------------------------------------------------------------
 */
-public Action:AntlionGuardSeekThink(Handle:timer, any:monsterRef)
+public Action AntlionGuardSeekThink(Handle timer, any monsterRef)
 {
-	new monster = EntRefToEntIndex(monsterRef);
+	int monster = EntRefToEntIndex(monsterRef);
 	
 	if (monster != INVALID_ENT_REFERENCE && BaseNPC_IsAlive(monster))
 	{
-		new target = BaseNPC_GetTarget(monster);
+		int target = BaseNPC_GetTarget(monster);
 		
 		if (target > 0)
 		{
@@ -222,7 +230,7 @@ public Action:AntlionGuardSeekThink(Handle:timer, any:monsterRef)
 	AntlionGuardDamageHook
 	------------------------------------------------------------------------------------------
 */
-public Action:AntlionGuardDamageHook(monster, &attacker, &inflictor, &Float:damage, &damagetype)
+public Action AntlionGuardDamageHook(int monster, int& attacker, int& inflictor, float& damage, int& damagetype)
 {
 	if (BaseNPC_Hurt(monster, attacker, RoundToZero(damage), "npc/antlion_guard/angry1.wav"))
 		SDKUnhook(monster, SDKHook_OnTakeDamage, AntlionGuardDamageHook);

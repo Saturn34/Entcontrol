@@ -20,6 +20,9 @@
 #include <entcontrol>
 #include <steamtools>
 
+#pragma newdecls required
+#pragma semicolon 1
+
 // -- Definitions
 #define PLUGIN_VERSION "0.0.1.8"
 
@@ -28,50 +31,49 @@
 
 // -- Globals
 // - Some variables
-new gObj[MAXPLAYERS+1];
-new gSelectedEntity[MAXPLAYERS+1]; // This is not the grabbed-entity!
-new Float:gSavedPos[MAXPLAYERS+1][3];
-new Float:gDistance[MAXPLAYERS+1];
-new Float:gNextPickup[MAXPLAYERS+1];
-new Handle:gTimer;
-new Handle:gTimerVehicles;
-new Handle:gTimerHudInfo;
-new gCollisionOffset;
+int gObj[MAXPLAYERS+1];
+int gSelectedEntity[MAXPLAYERS+1]; // This is not the grabbed-entity!
+float gSavedPos[MAXPLAYERS+1][3];
+float gDistance[MAXPLAYERS+1];
+float gNextPickup[MAXPLAYERS+1];
+Handle gTimer;
+Handle gTimerVehicles;
+Handle gTimerHudInfo;
+int gCollisionOffset;
 //new gSelectedEntitySprite;
-new gLeaderOffset;
-new fakeClient;
-new gLaser1;
-new gHalo1;
-new gSmoke1;
-new gGlow1;
-new bool:notBetweenRounds;
+int gLeaderOffset;
+int fakeClient;
+int gLaser1;
+int gHalo1;
+int gSmoke1;
+int gGlow1;
+bool notBetweenRounds;
 
 // Admin Flags
-//new Handle:gUpdateURL = INVALID_HANDLE;
-new Handle:gAdvert = INVALID_HANDLE;
-new Handle:gAdminFlagGrab = INVALID_HANDLE;
-new Handle:gAdminFlagGrabPlayer = INVALID_HANDLE;
-new Handle:gAdminFlagHUD = INVALID_HANDLE;
-new Handle:gAdminCanGrabSelf = INVALID_HANDLE;
-new Handle:gAdminCanModSelf = INVALID_HANDLE;
-new Handle:gNoneAdminsUseGrab = INVALID_HANDLE;
-new Handle:gAdminShowHud = INVALID_HANDLE;
-new Handle:gSpawnRandomNPCs = INVALID_HANDLE;
-new Handle:gDrawBoundingBox = INVALID_HANDLE;
+Handle gAdvert;
+Handle gAdminFlagGrab;
+Handle gAdminFlagGrabPlayer;
+Handle gAdminFlagHUD;
+Handle gAdminCanGrabSelf;
+Handle gAdminCanModSelf;
+Handle gNoneAdminsUseGrab;
+Handle gAdminShowHud;
+Handle gSpawnRandomNPCs;
+Handle gDrawBoundingBox;
 
 // Spraytrace
-new Float:SprayPos[MAXPLAYERS + 1][3];
-new String:SprayName[MAXPLAYERS + 1][64];
+float SprayPos[MAXPLAYERS + 1][3];
+char SprayName[MAXPLAYERS + 1][64];
 
 // gameMod
-new GameType:gameMod;
+GameType gameMod;
 
 // Extensions
-new bool:SDKHooksLoaded;
-new bool:EntControlExtLoaded;
+bool SDKHooksLoaded;
+bool EntControlExtLoaded;
 
-new Handle:kv = INVALID_HANDLE;
-new Handle:kvEnts = INVALID_HANDLE;
+Handle kv;
+Handle kvEnts;
 
 // -- Entcontrol-Includes
 #include "stocks.sp"
@@ -93,7 +95,7 @@ new Handle:kvEnts = INVALID_HANDLE;
 // -- Plugin Info
 // Please do not just remove my name or rename this plugin :(
 // I spend much time to write this plugin -.-
-public Plugin:myinfo = 
+public Plugin myinfo = 
 {
 	name = "Ent-Control",
 	author = "LeGone",
@@ -107,9 +109,9 @@ public Plugin:myinfo =
 	EVENTS CODE
 	------------------------------------------------------------------------------------------
 */
-public OnPluginStart()
+public void OnPluginStart()
 {
-	CreateConVar("sm_entcontrol_version", PLUGIN_VERSION, "EntControl-Plugin Version", FCVAR_PLUGIN|FCVAR_NOTIFY|FCVAR_REPLICATED|FCVAR_DONTRECORD);
+	CreateConVar("sm_entcontrol_version", PLUGIN_VERSION, "EntControl-Plugin Version", FCVAR_NOTIFY|FCVAR_REPLICATED|FCVAR_DONTRECORD);
 	
 	PrintToServer("==== Entcontrol ====");
 	PrintToServer("Version %s", PLUGIN_VERSION);
@@ -177,7 +179,7 @@ public OnPluginStart()
 	if (gameMod == CSS || gameMod == CSGO)
 	{
 		// - NPCs
-		gLeaderOffset = FindSendPropOffs("CHostage", "m_leader");
+		gLeaderOffset = FindSendPropInfo("CHostage", "m_leader");
 	}
 	
 	// - NPCs
@@ -220,7 +222,7 @@ public OnPluginStart()
 	PrintToServer("==== !Entcontrol ====");
 }
 
-public APLRes:AskPluginLoad2(Handle:myself, bool:late, String:error[], err_max)
+public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
 {
 	// We need to make the SteamTools-Call optional
 	MarkNativeAsOptional("Steam_GetPublicIP");
@@ -229,7 +231,7 @@ public APLRes:AskPluginLoad2(Handle:myself, bool:late, String:error[], err_max)
 	return (APLRes_Success);
 }
 
-public OnEventShutdown()
+public void OnEventShutdown()
 {
 	UnhookEvent("player_death", OnPlayerDeath);
 	UnhookEvent("player_spawn", OnPlayerSpawn);
@@ -249,7 +251,7 @@ public OnEventShutdown()
 		UnhookEvent("dod_round_win", OnRoundEnd);
 }
 
-public OnMapStart()
+public void OnMapStart()
 {
 	// Check for SDKHOOKS
 	if (GetExtensionFileStatus("sdkhooks.ext") != 1)
@@ -293,11 +295,11 @@ public OnMapStart()
 	PrecacheSound("physics/glass/glass_sheet_break3.wav");
 	
 	kv = CreateKeyValues("EntControl");
-	decl String:file[256];
+	char file[256];
 	BuildPath(Path_SM, file, sizeof(file), "configs/entcontrol.cfg");
 	if (!FileToKeyValues(kv, file))
 	{
-		CloseHandle(kv);
+		delete kv;
 		kv = INVALID_HANDLE;
 		
 		LogError("%s NOT loaded! You NEED that file!", file);
@@ -307,7 +309,7 @@ public OnMapStart()
 	BuildPath(Path_SM, file, sizeof(file), "configs/entcontrol_entities.cfg");
 	if (!FileToKeyValues(kvEnts, file))
 	{
-		CloseHandle(kvEnts);
+		delete kvEnts;
 		kv = INVALID_HANDLE;
 		
 		LogError("%s NOT loaded! You NEED that file!", file);
@@ -325,14 +327,14 @@ public OnMapStart()
 	notBetweenRounds = true;
 }
 
-public OnMapEnd()
+public void OnMapEnd()
 {
 	if (gTimer != INVALID_HANDLE)
-		CloseHandle(gTimer);
+		delete gTimer;
 	if (gTimerHudInfo != INVALID_HANDLE)
-		CloseHandle(gTimerHudInfo);
+		delete gTimerHudInfo;
 	if (gTimerVehicles != INVALID_HANDLE)
-		CloseHandle(gTimerVehicles);
+		delete gTimerVehicles;
 
 	gLastKilledNPC = 0;
 	gNPCCount = 0;
@@ -340,7 +342,7 @@ public OnMapEnd()
 	FreeMenu();
 }
 
-public Action:OnRoundStart(Handle:event, const String:name[], bool:dontBroadcast)
+public Action OnRoundStart(Handle event, const char[] name, bool dontBroadcast)
 {
 	notBetweenRounds = true;
 	gRedPortal = 0;
@@ -348,7 +350,7 @@ public Action:OnRoundStart(Handle:event, const String:name[], bool:dontBroadcast
 	CreateTimer(0.5, SpawnEntities, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE);
 }
 
-public Action:OnRoundEnd(Handle:event, const String:name[], bool:dontBroadcast)
+public Action OnRoundEnd(Handle event, const char[] name, bool dontBroadcast)
 {
 	notBetweenRounds = false;
 	gLastKilledNPC = 0;
@@ -372,7 +374,7 @@ public Action:OnRoundEnd(Handle:event, const String:name[], bool:dontBroadcast)
 	*/
 }
 
-public OnClientPutInServer(client)
+public void OnClientPutInServer(int client)
 {
 	if (client)
 	{
@@ -386,7 +388,7 @@ public OnClientPutInServer(client)
 	}
 }
 
-public OnClientDisconnect(client) 
+public void OnClientDisconnect(int client) 
 {
 	// Was driving?
 	if (gClientVehicle[client] != 0)
@@ -394,25 +396,25 @@ public OnClientDisconnect(client)
 }
 
 // Hostage improvements
-public OnEntityCreated(entity, const String:classname[])
+public void OnEntityCreated(int entity, const char[] classname)
 {
 	if (StrEqual(classname, "hostage_entity"))
 		SDKHook(entity, SDKHook_Touch, OnHostageTouch);
 }
 
 // Improve the hostage AI !!! xD
-public Action:OnHostageTouch(hostage, other)
+public Action OnHostageTouch(int hostage, int other)
 {
 	if (other)
 	{
-		new String:edictname[32];
+		char edictname[32];
 		GetEdictClassname(other, edictname, 32);
 
 		if (StrEqual("func_breakable", edictname) || StrEqual("func_breakable_surf", edictname))
 		{
 			BaseNPC_PlaySound(hostage, "physics/glass/glass_sheet_break3.wav");
 			
-			new health = Entity_GetHealth(other);
+			int health = Entity_GetHealth(other);
 			if (health - 5 < 1)
 				AcceptEntityInput(other, "Break");
 			else
@@ -430,9 +432,9 @@ public Action:OnHostageTouch(hostage, other)
 	return (Plugin_Continue);
 }
 
-public Action:OnPlayerSpawn(Handle:event, const String:name[], bool:dontBroadcast)
+public Action OnPlayerSpawn(Handle event, const char[] name, bool dontBroadcast)
 {
-	new client = GetClientOfUserId(GetEventInt(event, "userid"));
+	int client = GetClientOfUserId(GetEventInt(event, "userid"));
 
 	// reset object held
 	gObj[client] = -1;
@@ -441,9 +443,9 @@ public Action:OnPlayerSpawn(Handle:event, const String:name[], bool:dontBroadcas
 	return (Plugin_Continue);
 }
 
-public Action:OnPlayerDeath(Handle:event, const String:name[], bool:dontBroadcast)
+public Action OnPlayerDeath(Handle event, const char[] name, bool dontBroadcast)
 {
-	new client = GetClientOfUserId(GetEventInt(event, "userid"));
+	int client = GetClientOfUserId(GetEventInt(event, "userid"));
 
 	// reset object held
 	gObj[client] = -1;
@@ -463,7 +465,7 @@ public Action:OnPlayerDeath(Handle:event, const String:name[], bool:dontBroadcas
 	COMMANDS
 	------------------------------------------------------------------------------------------
 */
-public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:angles[3], &weapon)
+public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3], float angles[3], int &weapon)
 {
 	if (gClientVehicle[client] != 0)
 	{
@@ -498,8 +500,10 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 			
 			if (gObj[client] >= 1)
 			{
-				new Float:vecDir[3], Float:vecPos[3], Float:vecVel[3];
-				new Float:viewang[3];
+				float vecDir[3];
+				float vecPos[3];
+				float vecVel[3];
+				float viewang[3];
 
 				// get client info
 				GetClientEyeAngles(client, viewang);
@@ -521,8 +525,9 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 			}
 			else
 			{
-				new ent;
-				new Float:VecPos_Ent[3], Float:VecPos_Client[3];
+				int ent;
+				float VecPos_Ent[3];
+				float VecPos_Client[3];
 				
 				ent = TraceToEntity(client); // GetClientAimTarget(client);
 
@@ -530,9 +535,9 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 				{
 					GetClientEyePosition(client, VecPos_Client);
 					GetEntPropVector(ent, Prop_Send, "m_vecOrigin", VecPos_Ent);
-					if(GetVectorDistance(VecPos_Client, VecPos_Ent) <= 128.0)
+					if (GetVectorDistance(VecPos_Client, VecPos_Ent) <= 128.0)
 					{
-						new String:edictname[64];
+						char edictname[64];
 						GetEdictClassname(ent, edictname, 64);
 						if (StrEqual(edictname, "prop_physics") || StrEqual(edictname, "prop_physics_multiplayer") || StrEqual(edictname, "func_physbox"))
 						{
@@ -548,12 +553,13 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 	return (Plugin_Continue);
 }
 
-stock GrabSomething(client)
+stock void GrabSomething(int client)
 {
 	if (CanUseCMD(client, gAdminFlagGrab))
 	{
-		new ent;
-		new Float:VecPos_Ent[3], Float:VecPos_Client[3];
+		int ent;
+		float VecPos_Ent[3];
+		float VecPos_Client[3];
 		
 		if (GetConVarBool(gAdminCanGrabSelf)) // I know this might be slow ... but we need the ability to change the cvar every time
 			ent = GetObject(client);
@@ -569,7 +575,7 @@ stock GrabSomething(client)
 			return;
 
 		// only grab physics entities
-		new String:edictname[128];
+		char edictname[128];
 		GetEdictClassname(ent, edictname, 128);
 
 		if (StrEqual(edictname, "player"))
@@ -619,25 +625,25 @@ stock GrabSomething(client)
 		GetClientEyePosition(client, VecPos_Client);
 		gDistance[client] = GetVectorDistance(VecPos_Ent, VecPos_Client, false);
 
-		new Float:position[3];
+		float position[3];
 		TeleportEntity(ent, NULL_VECTOR, NULL_VECTOR, position);
 		
 		EmitSoundToClient(client, "buttons/combine_button5.wav");
 	}
 }
 
-public Action:Command_Grab(client, args)
+public Action Command_Grab(int client, int args)
 {
 	GrabSomething(client);
 
 	return (Plugin_Handled);
 }
 
-public Action:Command_UnGrab(client, args)
+public Action Command_UnGrab(int client, int args)
 {
 	if (ValidGrab(client))
 	{
-		new String:edictname[128];
+		char edictname[128];
 		GetEdictClassname(gObj[client], edictname, 128);
 		
 		if (StrEqual(edictname, "prop_physics") || StrEqual(edictname, "prop_physics_multiplayer"))
@@ -649,13 +655,13 @@ public Action:Command_UnGrab(client, args)
 	return (Plugin_Handled);
 }
 
-public Action:Command_GrabToggle(client, args)
+public Action Command_GrabToggle(int client, int args)
 {
 	if (gObj[client] != -1)
 	{
 		if (ValidGrab(client))
 		{
-			new String:edictname[128];
+			char edictname[128];
 			GetEdictClassname(gObj[client], edictname, 128);
 			
 			if (StrEqual(edictname, "prop_physics") || StrEqual(edictname, "prop_physics_multiplayer"))
@@ -672,7 +678,7 @@ public Action:Command_GrabToggle(client, args)
 	return (Plugin_Handled);
 }
 
-public Action:Command_Show_Info(client, args)
+public Action Command_Show_Info(int client, int args)
 {
 	if (client)
 		ShowMOTDPanel(client, "EntControl-Information", "http://www.legone.name/entcontrol.html", 2);
@@ -704,12 +710,14 @@ public Action:Command_Report_Bugs(client, args)
 	MAIN TIMER/LOOP CODE
 	------------------------------------------------------------------------------------------
 */
-public Action:UpdateObjects(Handle:timer)
+public Action UpdateObjects(Handle timer)
 {
-	new Float:vecDir[3], Float:vecPos[3], Float:vecVel[3];
-	new Float:viewang[3];
+	float vecDir[3];
+	float vecPos[3];
+	float vecVel[3];
+	float viewang[3];
 
-	for (new i = 1; i <= MaxClients; i++)
+	for (int i = 1; i <= MaxClients; i++)
 	{
 		if (ValidGrab(i))
 		{
@@ -735,11 +743,11 @@ public Action:UpdateObjects(Handle:timer)
 	return (Plugin_Continue);
 }
 
-public Action:UpdateHudInfoExtended(Handle:timer)
+public Action UpdateHudInfoExtended(Handle timer)
 {
-	new Float:vecPos[3];
+	float vecPos[3];
 	
-	for (new i=1; i <= MaxClients; i++)
+	for (int i=1; i <= MaxClients; i++)
 	{
 		if (IsClientConnectedIngame(i) && !IsFakeClient(i))
 		{
@@ -747,14 +755,14 @@ public Action:UpdateHudInfoExtended(Handle:timer)
 			{
 				GetPlayerEye(i, vecPos);
 
-				for (new i2 = 1; i2 <= MaxClients; i2++) 
+				for (int i2 = 1; i2 <= MaxClients; i2++) 
 				{
 					if (GetVectorDistance(vecPos, SprayPos[i2]) <= 40.0)
 					{
-						decl String:szText[250];
+						char szText[250];
 						Format(szText, sizeof(szText), "Sprayer: %s", SprayName[i2]);
 						
-						new Handle:hBuffer = StartMessageOne("KeyHintText", i);
+						Handle hBuffer = StartMessageOne("KeyHintText", i);
 						BfWriteByte(hBuffer, 1);
 						BfWriteString(hBuffer, szText);
 						EndMessage();
@@ -764,19 +772,19 @@ public Action:UpdateHudInfoExtended(Handle:timer)
 				}
 				
 				// find entity
-				new ent = GetObject(i, false);
+				int ent = GetObject(i, false);
 				if (ent != -1)
 				{
-					new String:edictname[128];
+					char edictname[128];
 					GetEdictClassname(ent, edictname, 128);
 
 					if (StrEqual(edictname, "player") && IsPlayerAlive(ent))
 						GetClientName(ent, edictname, sizeof(edictname));
 
-					decl String:szText[64];
+					char szText[64];
 					Format(szText, sizeof(szText), "%s(%i)\nHP: %i", edictname, ent, GetEntProp(ent, Prop_Data, "m_iHealth"));
     
-					new Handle:hBuffer = StartMessageOne("KeyHintText", i);
+					Handle hBuffer = StartMessageOne("KeyHintText", i);
 					BfWriteByte(hBuffer, 1);
 					BfWriteString(hBuffer, szText);
 					EndMessage();
@@ -799,11 +807,11 @@ public Action:UpdateHudInfoExtended(Handle:timer)
 	return (Plugin_Continue);
 }
 
-public Action:UpdateHudInfoSimple(Handle:timer)
+public Action UpdateHudInfoSimple(Handle timer)
 {
-	new Float:vecPos[3];
+	float vecPos[3];
 	
-	for (new i=1; i <= MaxClients; i++)
+	for (int i=1; i <= MaxClients; i++)
 	{
 		if (IsClientConnected(i) && IsClientInGame(i) && !IsFakeClient(i))
 		{
@@ -811,11 +819,11 @@ public Action:UpdateHudInfoSimple(Handle:timer)
 			{
 				GetPlayerEye(i, vecPos);
 
-				for (new i2 = 1; i2 <= MaxClients; i2++) 
+				for (int i2 = 1; i2 <= MaxClients; i2++) 
 				{
 					if (GetVectorDistance(vecPos, SprayPos[i2]) <= 40.0)
 					{
-						decl String:szText[250];
+						char szText[250];
 						Format(szText, sizeof(szText), "Sprayer: %s", SprayName[i2]);
     
 						PrintCenterText(i, szText);
@@ -825,10 +833,10 @@ public Action:UpdateHudInfoSimple(Handle:timer)
 				}
 
 				// find entity
-				new ent = GetObject(i, false);
+				int ent = GetObject(i, false);
 				if (ent != -1)
 				{
-					new String:edictname[128];
+					char edictname[128];
 					GetEdictClassname(ent, edictname, 128);
 
 					if (StrEqual(edictname, "player") && IsPlayerAlive(ent))

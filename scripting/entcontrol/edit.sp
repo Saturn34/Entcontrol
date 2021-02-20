@@ -6,9 +6,9 @@
 */
 
 // Admin Flags
-new Handle:gAdminFlagEdit;
+Handle gAdminFlagEdit;
 
-public RegEditCommands()
+public void RegEditCommands()
 {
 	gAdminFlagEdit = CreateConVar("sm_entcontrol_edit_fl", "z", "The needed Flag to edit entities");
 	RegConsoleCmd("sm_entcontrol_freeze", Command_Freeze, "Freeze Object");
@@ -38,17 +38,17 @@ public RegEditCommands()
 	Freeze the entity
 	------------------------------------------------------------------------------------------
 */
-stock Entity_Freeze(ent)
+stock void Entity_Freeze(int ent)
 {
 	SetEntityMoveType(ent, MOVETYPE_NONE);
 }
 
-public Action:Command_Freeze(client, args)
+public Action Command_Freeze(int client, int args)
 {
 	if (!CanUseCMD(client, gAdminFlagEdit))
 		return (Plugin_Handled);
 	
-	new ent;
+	int ent;
 	if (GetConVarBool(gAdminCanModSelf)) // I know this might be slow ... but we need the ability to change the cvar any time
 		ent = GetObject(client);
 	else
@@ -74,9 +74,9 @@ public Action:Command_Freeze(client, args)
 	Freeze the entity
 	------------------------------------------------------------------------------------------
 */
-stock Entity_UnFreeze(ent)
+stock void Entity_UnFreeze(int ent)
 {
-	new String:edictname[64];
+	char edictname[64];
 	GetEdictClassname(ent, edictname, 64);
 	
 	if (GetEntityMoveType(ent) == MOVETYPE_NONE)
@@ -87,16 +87,16 @@ stock Entity_UnFreeze(ent)
 			SetEntityMoveType(ent, MOVETYPE_VPHYSICS);
 	}
 
-	new Float:position[3];
+	float position[3];
 	TeleportEntity(ent, NULL_VECTOR, NULL_VECTOR, position);
 }
 
-public Action:Command_UnFreeze(client, args)
+public Action Command_UnFreeze(int client, int args)
 {
 	if (!CanUseCMD(client, gAdminFlagEdit))
 		return (Plugin_Handled);
 
-	new ent;
+	int ent;
 	if (GetConVarBool(gAdminCanModSelf)) // I know this might be slow ... but we need the ability to change the cvar any time
 		ent = GetObject(client);
 	else
@@ -122,17 +122,17 @@ public Action:Command_UnFreeze(client, args)
 	Make it breakable
 	------------------------------------------------------------------------------------------
 */
-stock Entity_Breakable(ent)
+stock void Entity_Breakable(int ent)
 {
 	SetEntProp(ent, Prop_Data, "m_takedamage", 2, 1);
 }
 
-public Action:Command_Breakable(client, args)
+public Action Command_Breakable(int client, int args)
 {
 	if (!CanUseCMD(client, gAdminFlagEdit))
 		return (Plugin_Handled);
 
-	new ent;
+	int ent;
 	if (GetConVarBool(gAdminCanModSelf)) // I know this might be slow ... but we need the ability to change the cvar any time
 		ent = GetObject(client);
 	else
@@ -155,17 +155,17 @@ public Action:Command_Breakable(client, args)
 	Make it invincible
 	------------------------------------------------------------------------------------------
 */
-stock Entity_Invincible(ent)
+stock void Entity_Invincible(int ent)
 {
 	SetEntProp(ent, Prop_Data, "m_takedamage", 0, 1);
 }
 
-public Action:Command_Invincible(client, args)
+public Action Command_Invincible(int client, int args)
 {
 	if (!CanUseCMD(client, gAdminFlagEdit))
 		return (Plugin_Handled);
 
-	new ent;
+	int ent;
 	if (GetConVarBool(gAdminCanModSelf)) // I know this might be slow ... but we need the ability to change the cvar any time
 		ent = GetObject(client);
 	else
@@ -188,10 +188,10 @@ public Action:Command_Invincible(client, args)
 	Modify gravity
 	------------------------------------------------------------------------------------------
 */
-stock Float:Entity_Gravity(ent, bool:isUpOrDown)
+stock float Entity_Gravity(int ent, bool isUpOrDown)
 {
 	// Get the gravity
-	new Float:gravity = GetEntPropFloat(ent, Prop_Data, "m_flGravity");
+	float gravity = GetEntPropFloat(ent, Prop_Data, "m_flGravity");
 
 	if (isUpOrDown)
 		gravity += 0.1;
@@ -203,12 +203,12 @@ stock Float:Entity_Gravity(ent, bool:isUpOrDown)
 	return (gravity);
 }
 
-public Action:Command_Gravity(client, args)
+public Action Command_Gravity(int client, int args)
 {
 	if (!CanUseCMD(client, gAdminFlagEdit))
 		return (Plugin_Handled);
 
-	new ent;
+	int ent;
 	if (GetConVarBool(gAdminCanModSelf)) // I know this might be slow ... but we need the ability to change the cvar any time
 		ent = GetObject(client);
 	else
@@ -216,8 +216,8 @@ public Action:Command_Gravity(client, args)
 
 	if (ent != -1)
 	{
-		decl String:arg1[12];
-		new bool:isUpOrDown;
+		char arg1[12];
+		bool isUpOrDown;
 
 		if (args != 1)
 			ReplyToCommand(client, "<up> or <down> ?");
@@ -251,10 +251,10 @@ public Action:Command_Gravity(client, args)
 	Modify size
 	------------------------------------------------------------------------------------------
 */
-stock Float:Entity_Size(ent, bool:isUpOrDown)
+stock float Entity_Size(int ent, bool isUpOrDown)
 {
 	// Get the gravity
-	new Float:size = GetEntPropFloat(ent, Prop_Data, "m_flModelScale");
+	float size = GetEntPropFloat(ent, Prop_Data, "m_flModelScale");
 
 	if (isUpOrDown)
 		size += 0.1;
@@ -266,12 +266,12 @@ stock Float:Entity_Size(ent, bool:isUpOrDown)
 	return (size);
 }
 
-public Action:Command_Size(client, args)
+public Action Command_Size(int client, int args)
 {
 	if (!CanUseCMD(client, gAdminFlagEdit))
 		return (Plugin_Handled);
 
-	new ent;
+	int ent;
 	if (GetConVarBool(gAdminCanModSelf)) // I know this might be slow ... but we need the ability to change the cvar any time
 		ent = GetObject(client);
 	else
@@ -279,13 +279,13 @@ public Action:Command_Size(client, args)
 	
 	if (ent != -1)
 	{
-		new String:edictname[64];
+		char edictname[64];
 		GetEdictClassname(ent, edictname, 64);
 
 		if (StrContains(edictname, "func_") != 0)
 		{
-			decl String:arg1[12];
-			new bool:isUpOrDown;
+			char arg1[12];
+			bool isUpOrDown;
 
 			if (args != 1)
 				ReplyToCommand(client, "<up> or <down> ?");
@@ -321,10 +321,10 @@ public Action:Command_Size(client, args)
 	Modify speed
 	------------------------------------------------------------------------------------------
 */
-stock Float:Entity_Speed(ent, bool:isUpOrDown)
+stock float Entity_Speed(int ent, bool isUpOrDown)
 {
 	// Get the gravity
-	new Float:speed = GetEntPropFloat(ent, Prop_Data, "m_flLaggedMovementValue");
+	float speed = GetEntPropFloat(ent, Prop_Data, "m_flLaggedMovementValue");
 
 	if (isUpOrDown)
 		speed += 0.1;
@@ -336,12 +336,12 @@ stock Float:Entity_Speed(ent, bool:isUpOrDown)
 	return (speed);
 }
 
-public Action:Command_Speed(client, args)
+public Action Command_Speed(int client, int args)
 {
 	if (!CanUseCMD(client, gAdminFlagEdit))
 		return (Plugin_Handled);
 
-	new ent;
+	int ent;
 	if (GetConVarBool(gAdminCanModSelf)) // I know this might be slow ... but we need the ability to change the cvar any time
 		ent = GetObject(client);
 	else
@@ -349,8 +349,8 @@ public Action:Command_Speed(client, args)
 		
 	if (ent != -1)
 	{
-		decl String:arg1[12];
-		new bool:isUpOrDown;
+		char arg1[12];
+		bool isUpOrDown;
 
 		if (args != 1)
 			ReplyToCommand(client, "<up> or <down> ?");
@@ -385,9 +385,9 @@ public Action:Command_Speed(client, args)
 	Similar to +use, but more aggressive.
 	------------------------------------------------------------------------------------------
 */
-stock Entity_Touch(ent, client)
+stock void Entity_Touch(int ent, int client)
 {
-	new String:edictname[64];
+	char edictname[64];
 	GetEdictClassname(ent, edictname, 64);
 	
 	if (StrEqual(edictname, "func_button"))
@@ -409,12 +409,12 @@ stock Entity_Touch(ent, client)
 		AcceptEntityInput(ent, "Use", client, client);
 }
 
-public Action:Command_Touch(client, args)
+public Action Command_Touch(int client, int args)
 {
 	if (!CanUseCMD(client, gAdminFlagEdit))
 		return (Plugin_Handled);
 
-	new ent;
+	int ent;
 	if (GetConVarBool(gAdminCanModSelf)) // I know this might be slow ... but we need the ability to change the cvar any time
 		ent = GetObject(client);
 	else
@@ -438,17 +438,17 @@ public Action:Command_Touch(client, args)
 	Burn it
 	------------------------------------------------------------------------------------------
 */
-stock Entity_Ignite(ent, Float:duration)
+stock void Entity_Ignite(int ent, float duration)
 {
 	IgniteEntity(ent, duration);
 }
 
-public Action:Command_Ignite(client, args)
+public Action Command_Ignite(int client, int args)
 {
 	if (!CanUseCMD(client, gAdminFlagEdit))
 		return (Plugin_Handled);
 
-	new ent;
+	int ent;
 	if (GetConVarBool(gAdminCanModSelf)) // I know this might be slow ... but we need the ability to change the cvar any time
 		ent = GetObject(client);
 	else
@@ -473,18 +473,18 @@ public Action:Command_Ignite(client, args)
 	Make it visible
 	------------------------------------------------------------------------------------------
 */
-stock Entity_Visible(ent)
+stock void Entity_Visible(int ent)
 {
 	SetEntityRenderMode(ent, RENDER_NORMAL);
 	SetEntityRenderColor(ent, 255, 255, 255, 255);
 }
 
-public Action:Command_Visible(client, args)
+public Action Command_Visible(int client, int args)
 {
 	if (!CanUseCMD(client, gAdminFlagEdit))
 		return (Plugin_Handled);
 
-	new ent;
+	int ent;
 	if (GetConVarBool(gAdminCanModSelf)) // I know this might be slow ... but we need the ability to change the cvar any time
 		ent = GetObject(client);
 	else
@@ -510,18 +510,18 @@ public Action:Command_Visible(client, args)
 	Make it invisible
 	------------------------------------------------------------------------------------------
 */
-stock Entity_InVisible(ent)
+stock void Entity_InVisible(int ent)
 {
 	SetEntityRenderMode(ent, RENDER_NONE);
 	SetEntityRenderColor(ent, 0, 0, 0, 0);
 }
 
-public Action:Command_Invisible(client, args)
+public Action Command_Invisible(int client, int args)
 {
 	if (!CanUseCMD(client, gAdminFlagEdit))
 		return (Plugin_Handled);
 
-	new ent;
+	int ent;
 	if (GetConVarBool(gAdminCanModSelf)) // I know this might be slow ... but we need the ability to change the cvar any time
 		ent = GetObject(client);
 	else
@@ -531,7 +531,7 @@ public Action:Command_Invisible(client, args)
 	{
 		Entity_InVisible(ent);
 		
-		PrintHintText(client, "%t", "Invisible")
+		PrintHintText(client, "%t", "Invisible");
 	}
 	else
 		PrintHintText(client, "%t", "Wrong entity");
@@ -545,9 +545,9 @@ public Action:Command_Invisible(client, args)
 	Make it solid
 	------------------------------------------------------------------------------------------
 */
-stock Entity_Solid(ent)
+stock void Entity_Solid(int ent)
 {
-	new String:edictname[128];
+	char edictname[128];
 	GetEdictClassname(ent, edictname, 128);
 	if (!StrEqual(edictname, "player"))
 		SetEntData(ent, gCollisionOffset, 5, 4, true);
@@ -555,12 +555,12 @@ stock Entity_Solid(ent)
 		SetEntData(ent, gCollisionOffset, 0, 4, true);
 }
 
-public Action:Command_Solid(client, args)
+public Action Command_Solid(int client, int args)
 {
 	if (!CanUseCMD(client, gAdminFlagEdit))
 		return (Plugin_Handled);
 
-	new ent;
+	int ent;
 	if (GetConVarBool(gAdminCanModSelf)) // I know this might be slow ... but we need the ability to change the cvar any time
 		ent = GetObject(client);
 	else
@@ -584,17 +584,17 @@ public Action:Command_Solid(client, args)
 	Make it unsolid
 	------------------------------------------------------------------------------------------
 */
-stock Entity_UnSolid(ent)
+stock void Entity_UnSolid(int ent)
 {
 	SetEntData(ent, gCollisionOffset, 2, 4, true);
 }
 
-public Action:Command_UnSolid(client, args)
+public Action Command_UnSolid(int client, int args)
 {
 	if (!CanUseCMD(client, gAdminFlagEdit))
 		return (Plugin_Handled);
 
-	new ent;
+	int ent;
 	if (GetConVarBool(gAdminCanModSelf)) // I know this might be slow ... but we need the ability to change the cvar any time
 		ent = GetObject(client);
 	else
@@ -618,17 +618,17 @@ public Action:Command_UnSolid(client, args)
 	Make it activate
 	------------------------------------------------------------------------------------------
 */
-stock Entity_Activate(ent)
+stock void Entity_Activate(int ent)
 {
 	ActivateEntity(ent);
 }
 
-public Action:Command_Activate(client, args)
+public Action Command_Activate(int client, int args)
 {
 	if (!CanUseCMD(client, gAdminFlagEdit))
 		return (Plugin_Handled);
 
-	new ent;
+	int ent;
 	if (GetConVarBool(gAdminCanModSelf)) // I know this might be slow ... but we need the ability to change the cvar any time
 		ent = GetObject(client);
 	else
@@ -652,7 +652,7 @@ public Action:Command_Activate(client, args)
 	Change HP to x
 	------------------------------------------------------------------------------------------
 */
-stock Entity_SetHealth(ent, health)
+stock void Entity_SetHealth(int ent, int health)
 {
 	// SetEntityHealth(ent, health);
 	SetEntProp(ent, Prop_Data, "m_iHealth", health);
@@ -664,17 +664,17 @@ stock Entity_SetHealth(ent, health)
 	Get Health
 	------------------------------------------------------------------------------------------
 */
-stock Entity_GetHealth(entity)
+stock int Entity_GetHealth(int entity)
 {
 	return (GetEntProp(entity, Prop_Data, "m_iHealth"));
 }
 
-public Action:Command_HealthToOne(client, args)
+public Action Command_HealthToOne(int client, int args)
 {
 	if (!CanUseCMD(client, gAdminFlagEdit))
 		return (Plugin_Handled);
 
-	new ent;
+	int ent;
 	if (GetConVarBool(gAdminCanModSelf)) // I know this might be slow ... but we need the ability to change the cvar any time
 		ent = GetObject(client);
 	else
@@ -698,12 +698,12 @@ public Action:Command_HealthToOne(client, args)
 	Change HP to 100
 	------------------------------------------------------------------------------------------
 */
-public Action:Command_HealthToFull(client, args)
+public Action Command_HealthToFull(int client, int args)
 {
 	if (!CanUseCMD(client, gAdminFlagEdit))
 		return (Plugin_Handled);
 
-	new ent;
+	int ent;
 	if (GetConVarBool(gAdminCanModSelf)) // I know this might be slow ... but we need the ability to change the cvar any time
 		ent = GetObject(client);
 	else
@@ -727,9 +727,9 @@ public Action:Command_HealthToFull(client, args)
 	Change the skin to the one we saved
 	------------------------------------------------------------------------------------------
 */
-stock Entity_ChangeSkin(ent, client)
+stock void Entity_ChangeSkin(int ent, int client)
 {
-	new String:edictname[128];
+	char edictname[128];
 	GetEdictClassname(ent, edictname, 128);
 	if ((strncmp("prop_", edictname, 5, false) == 0)
 		|| (strncmp("hosta", edictname, 5, false) == 0)
@@ -750,12 +750,12 @@ stock Entity_ChangeSkin(ent, client)
 		PrintHintText(client, "%t", "Wrong entity");
 }
 
-public Action:Command_ChangeSkin(client, args)
+public Action Command_ChangeSkin(int client, int args)
 {
 	if (!CanUseCMD(client, gAdminFlagEdit))
 		return (Plugin_Handled);
 
-	new ent = GetObject(client, false);
+	int ent = GetObject(client, false);
 	if (ent != -1)
 		Entity_ChangeSkin(ent, client);
 	else
@@ -770,19 +770,19 @@ public Action:Command_ChangeSkin(client, args)
 	Make VERY much damage
 	------------------------------------------------------------------------------------------
 */
-stock Entity_Hurt(ent, client)
+stock void Entity_Hurt(int ent, int client)
 {
-	decl Float:position[3];
+	float position[3];
 	GetEntPropVector(ent, Prop_Send, "m_vecOrigin", position);
 	MakeDamage(client, ent, 100000, DMG_ACID, 1.0, position);
 }
 
-public Action:Command_Hurt(client, args)
+public Action Command_Hurt(int client, int args)
 {
 	if (!CanUseCMD(client, gAdminFlagEdit))
 		return (Plugin_Handled);
 
-	new ent;
+	int ent;
 	if (GetConVarBool(gAdminCanModSelf)) // I know this might be slow ... but we need the ability to change the cvar any time
 		ent = GetObject(client);
 	else
@@ -802,12 +802,12 @@ public Action:Command_Hurt(client, args)
 	Remove the given Entity
 	------------------------------------------------------------------------------------------
 */
-public Action:Command_Rm(client, args)
+public Action Command_Rm(int client, int args)
 {
 	if (!CanUseCMD(client, gAdminFlagEdit))
 		return (Plugin_Handled);
 
-	new ent = GetObject(client, false);
+	int ent = GetObject(client, false);
 	if (ent != -1)
 		RemoveEntity(ent);
 	else

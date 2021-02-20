@@ -1,3 +1,7 @@
+/* put the line below after all of the includes!
+#pragma newdecls required
+*/
+
 /* 
 	------------------------------------------------------------------------------------------
 	EntControl::Police
@@ -5,7 +9,7 @@
 	------------------------------------------------------------------------------------------
 */
 
-public InitPolice()
+public void InitPolice()
 {
 	PrecacheModel("models/police.mdl");
 	PrecacheModel("models/weapons/w_stunbato.mdl");
@@ -21,11 +25,11 @@ public InitPolice()
 	Command_Police
 	------------------------------------------------------------------------------------------
 */
-public Action:Command_Police(client, args)
+public Action Command_Police(int client, int args)
 {
 	if (!CanUseCMD(client, gAdminFlagNPC)) return (Plugin_Handled);
 	
-	decl Float:position[3];
+	float position[3];
 	if(GetPlayerEye(client, position))
 		Police_Spawn(position, client);
 	else
@@ -39,10 +43,10 @@ public Action:Command_Police(client, args)
 	Police_Spawn
 	------------------------------------------------------------------------------------------
 */
-stock Police_Spawn(Float:position[3], owner = 0)
+stock void Police_Spawn(float position[3], int owner = 0)
 {
 	// Spawn
-	new monster = BaseNPC_Spawn(position, "models/police.mdl", PoliceSeekThink, "npc_police", "Idle_Baton");
+	int monster = BaseNPC_Spawn(position, "models/police.mdl", PoliceSeekThink, "npc_police", "Idle_Baton");
 	
 	SDKHook(monster, SDKHook_OnTakeDamage, PoliceDamageHook);
 	
@@ -51,16 +55,16 @@ stock Police_Spawn(Float:position[3], owner = 0)
 	if (owner)
 		BaseNPC_SetOwner(monster, owner);
 	
-	decl String:tmp[32];
+	char tmp[32];
 	GetEntPropString(monster, Prop_Data, "m_iName", tmp, sizeof(tmp));
-	new monster_tmp = StringToInt(tmp);
+	int monster_tmp = StringToInt(tmp);
 	
-	new weapon = CreateEntityByName("prop_dynamic_ornament");
+	int weapon = CreateEntityByName("prop_dynamic_ornament");
 	DispatchKeyValue(weapon, "model", "models/weapons/w_stunbaton.mdl");
 	DispatchKeyValue(weapon, "classname", "stunstick");
 	DispatchSpawn(weapon);
 	
-	decl String:entIndex[6];
+	char entIndex[6];
 	IntToString(EntIndexToEntRef(weapon), entIndex, sizeof(entIndex)-1);
 	DispatchKeyValue(monster_tmp, "targetname", entIndex);
 	
@@ -75,14 +79,15 @@ stock Police_Spawn(Float:position[3], owner = 0)
 	PoliceAttackThink
 	------------------------------------------------------------------------------------------
 */
-public Action:PoliceSeekThink(Handle:timer, any:monsterRef)
+public Action PoliceSeekThink(Handle timer, any monsterRef)
 {
-	new monster = EntRefToEntIndex(monsterRef);
+	int monster = EntRefToEntIndex(monsterRef);
 	
 	if (monster != INVALID_ENT_REFERENCE && IsValidEntity(monster))
 	{
-		new target = BaseNPC_GetTarget(monster);
-		decl Float:vClientPosition[3], Float:vEntPosition[3];
+		int target = BaseNPC_GetTarget(monster);
+		float vClientPosition[3];
+		float vEntPosition[3];
 
 		GetEntPropVector(monster, Prop_Send, "m_vecOrigin", vEntPosition);
 		
@@ -119,9 +124,9 @@ public Action:PoliceSeekThink(Handle:timer, any:monsterRef)
 	PoliceIdleThink
 	------------------------------------------------------------------------------------------
 */
-public Action:PoliceIdleThink(Handle:timer, any:monsterRef)
+public Action PoliceIdleThink(Handle timer, any monsterRef)
 {
-	new monster = EntRefToEntIndex(monsterRef);
+	int monster = EntRefToEntIndex(monsterRef);
 	
 	if (monster != INVALID_ENT_REFERENCE && IsValidEntity(monster))
 	{
@@ -139,7 +144,7 @@ public Action:PoliceIdleThink(Handle:timer, any:monsterRef)
 	HeadCrabDamageHook
 	------------------------------------------------------------------------------------------
 */
-public Action:PoliceDamageHook(monster, &attacker, &inflictor, &Float:damage, &damagetype)
+public Action PoliceDamageHook(int monster, int& attacker, int& inflictor, float& damage, int& damagetype)
 {
 	if (BaseNPC_Hurt(monster, attacker, RoundToZero(damage), "npc/metropolice/pain1.wav"))
 	{

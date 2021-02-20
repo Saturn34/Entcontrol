@@ -29,9 +29,9 @@ enum GameType
 	NMRIH = 10
 };
 
-stock GameType:GetGameType()
+stock GameType GetGameType()
 {
-	decl String:sGameType[20];
+	char sGameType[20];
 	GetGameFolderName(sGameType, sizeof(sGameType));
 	
 	if (StrEqual(sGameType, "cstrike"))
@@ -56,9 +56,9 @@ stock GameType:GetGameType()
 	return (OTHER);
 }
 
-stock String:GameTypeToString()
+stock char GameTypeToString()
 {
-	decl String:gameName[9];
+	char gameName[9];
 	
 	if (gameMod == CSS)
 		gameName = "cstrike";
@@ -86,11 +86,11 @@ stock String:GameTypeToString()
 	Do we have a valid grab ?
 	------------------------------------------------------------------------------------------
 */
-stock bool:ValidGrab(client)
+stock bool ValidGrab(int client)
 {
 	if (IsClientConnectedIngame(client))
 	{
-		new obj = gObj[client];
+		int obj = gObj[client];
 		if (obj != -1 && IsValidEntity(obj) && IsValidEdict(obj))
 			return (true);
 	}
@@ -108,7 +108,7 @@ stock bool:ValidGrab(client)
 	Do we have a valid selected entity ?
 	------------------------------------------------------------------------------------------
 */
-stock bool:ValidSelect(ent)
+stock bool ValidSelect(int ent)
 {
 	if (ent != -1 && IsValidEdict(ent) && IsValidEntity(ent))
 		return (true);
@@ -118,17 +118,17 @@ stock bool:ValidSelect(ent)
 
 /* 
 	------------------------------------------------------------------------------------------
-	REMOVEENTITY
+	KILLENTITY
 	Removes an Entity
 	------------------------------------------------------------------------------------------
 */
-stock RemoveEntity(entity, Float:time = 0.0)
+stock void KillEntity(int entity, float time = 0.0)
 {
 	if (time == 0.0)
 	{
 		if (IsValidEntity(entity))
 		{
-			new String:edictname[32];
+			char edictname[32];
 			GetEdictClassname(entity, edictname, 32);
 
 			if (!StrEqual(edictname, "player"))
@@ -141,11 +141,11 @@ stock RemoveEntity(entity, Float:time = 0.0)
 	}
 }
 
-public Action:RemoveEntityTimer(Handle:Timer, any:entityRef)
+public Action RemoveEntityTimer(Handle Timer, any entityRef)
 {
-	new entity = EntRefToEntIndex(entityRef);
+	int entity = EntRefToEntIndex(entityRef);
 	if (entity != INVALID_ENT_REFERENCE)
-		RemoveEntity(entity); // RemoveEntity(...) is capable of handling references
+		KillEntity(entity); // KillEntity(...) is capable of handling references
 	
 	return (Plugin_Stop);
 }
@@ -156,9 +156,9 @@ public Action:RemoveEntityTimer(Handle:Timer, any:entityRef)
 	NPC or Human ?
 	------------------------------------------------------------------------------------------
 */
-stock bool:IsCreature(ent)
+stock bool IsCreature(int ent)
 {
-	decl String:sBuffer[32];
+	char sBuffer[32];
 	GetEdictClassname(ent, sBuffer, 32);
 	
 	if (StrEqual(sBuffer, "player")
@@ -175,9 +175,9 @@ stock bool:IsCreature(ent)
 	Spawns random NPCs on random Map-Locations
 	------------------------------------------------------------------------------------------
 */
-stock SpawnRandomNPCs(count)
+stock void SpawnRandomNPCs(int count)
 {
-	new Float:position[3];
+	float position[3];
 	
 	if (count == 0)
 		return;
@@ -186,7 +186,7 @@ stock SpawnRandomNPCs(count)
 	{
 		if (EC_Nav_CachePositions())
 		{
-			for (new npc = 0; npc < count; npc++)
+			for (int npc = 0; npc < count; npc++)
 			{
 				if (EC_Nav_GetNextHidingSpot(position))
 				{
@@ -236,94 +236,6 @@ stock SpawnRandomNPCs(count)
 		PrintToServer("No Navigation loaded! Make sure the .nav is not packed in one of the .vpk-files.");
 		PrintToServer("It is not possible to spawn NPCs by random, without this file.");
 	}
-	
-	
-	/* OLD CODE
-	// Ref Entity
-	new entity = FindEntityByClassname(-1, "info_player_terrorist");
-	if (entity < 2)
-	{
-		LogMessage("SpawnRandomNPCs::No info_player_terrorist found.");
-		return;
-	}
-	
-	// Get Position
-	new Float:position[3], Float:newPosition[3], Float:vPosTop[3], Float:vPosGround[3];
-	GetEntPropVector(entity, Prop_Send, "m_vecOrigin", position);
-	new i;
-	
-	for (new npc = 0; npc < count; npc++)
-	{
-		for (i = 0; i < 150; i++)
-		{
-			newPosition[0] = position[0] + GetRandomFloat(-10000.0, 10000.0);
-			newPosition[1] = position[1] + GetRandomFloat(-10000.0, 10000.0);
-			newPosition[2] = position[2];
-			
-			// Top
-			new Float:angles[3];
-			angles[0] = -90.0;
-			angles[1] = 0.0;
-			angles[2] = 0.0;
-			new Handle:traceTop = TR_TraceRayFilterEx(newPosition, angles, MASK_NPCWORLDSTATIC, RayType_Infinite, TraceEntityFilterPlayer);
-
-			if(TR_DidHit(traceTop))
-			{
-				TR_GetEndPosition(vPosTop, traceTop);
-				CloseHandle(traceTop);
-				
-				// Bottom
-				angles[0] = 90.0;
-				angles[1] = 0.0;
-				angles[2] = 0.0;
-				new Handle:traceBottom = TR_TraceRayFilterEx(newPosition, angles, MASK_NPCWORLDSTATIC, RayType_Infinite, TraceEntityFilterPlayer);
-
-				if(TR_DidHit(traceBottom))
-				{
-					//This is the first function i ever saw that anything comes before the handle
-					TR_GetEndPosition(vPosGround, traceBottom);
-					CloseHandle(traceBottom);
-					
-					if(FloatAbs(newPosition[2] - vPosGround[2]) < 40.0 && GetVectorDistance(vPosTop, vPosGround) >= 64.0)
-						break;
-				}
-				else
-					CloseHandle(traceBottom);
-			}
-			else
-				CloseHandle(traceTop);
-		}
-		
-		if (i != 50)
-		{
-			vPosGround[2] += 20.0;
-			
-			switch (GetRandomInt(1, 10))
-			{
-				case 1:
-					AntLion_Spawn(vPosGround);
-				case 2:
-					AntLionGuard_Spawn(vPosGround);
-				case 3:
-					Barney_Spawn(vPosGround);
-				case 4:
-					GMan_Spawn(vPosGround);
-				case 5:
-					HeadCrab_Spawn(vPosGround);
-				case 6:
-					Police_Spawn(vPosGround);
-				case 7:
-					Soldier_Spawn(vPosGround);
-				case 8:
-					Sentry_Spawn(vPosGround);
-				case 9:
-					Vortigaunt_Spawn(vPosGround);
-				case 10:
-					Zombie_Spawn(vPosGround);
-			}
-		}
-	}
-	*/
 }
 
 /* 
@@ -332,15 +244,10 @@ stock SpawnRandomNPCs(count)
 	Load entites from file
 	------------------------------------------------------------------------------------------
 */
-public Action:SpawnEntities(Handle:timer)
+public Action SpawnEntities(Handle timer)
 {		
-	decl String:path[64];
-	decl String:map[32];
-	decl String:classname[32];
-	decl String:modelname[64];
-	new Float:position[3];
-	new Float:angle[3];
-	decl String:ammo[4];
+	char path[64], map[32], classname[32], modelname[64], ammo[4];
+	float position[3], angle[3];
 	
 	// +Spawn Random NPCS
 	SpawnRandomNPCs(GetConVarInt(gSpawnRandomNPCs));
@@ -349,14 +256,14 @@ public Action:SpawnEntities(Handle:timer)
 	GetCurrentMap(map, 32);
 	BuildPath(Path_SM, path, 64, "configs/ec_maps/%s.txt", map);
 	
-	new Handle:kvMapConfig = INVALID_HANDLE;
+	Handle kvMapConfig = INVALID_HANDLE;
 	kvMapConfig = CreateKeyValues(map);
 	FileToKeyValues(kvMapConfig, path);
 	
 	if (!KvGotoFirstSubKey(kvMapConfig))
 		return;
 	
-	decl String:section[9];
+	char section[9];
 	do
 	{
 		KvGetSectionName(kvMapConfig, section, sizeof(section));
@@ -374,7 +281,7 @@ public Action:SpawnEntities(Handle:timer)
 			PrecacheModel(modelname, true); // Late ... might lag the server -.-
 			
 			// new ent = CreateEntityByName(classname);
-			new ent = CreateEntityByName("prop_physics_override");
+			int ent = CreateEntityByName("prop_physics_override");
 			
 			DispatchKeyValue(ent, "physdamagescale", "0.0");
 			DispatchKeyValue(ent, "model", modelname);
@@ -392,7 +299,7 @@ public Action:SpawnEntities(Handle:timer)
 		else if (strncmp("weapon_", classname, 7, false) == 0)
 		{
 			// Create Entity
-			new ent = CreateEntityByName(classname);
+			int ent = CreateEntityByName(classname);
 			
 			KvGetString(kvMapConfig, "ammo", ammo, sizeof(ammo));
 			
@@ -411,12 +318,12 @@ public Action:SpawnEntities(Handle:timer)
 		else if (StrEqual("light_dynamic", classname))
 		{
 			// Create Entity
-			new ent = CreateEntityByName(classname);
+			int ent = CreateEntityByName(classname);
 			
 			if (ent != -1)
 			{
-				decl String:_light[20];
-				new Float:brightness;
+				char _light[20];
+				float brightness;
 				
 				KvGetString(kvMapConfig, "_light", _light, sizeof(_light));				
 				DispatchKeyValue(ent, "_light", _light);
@@ -431,7 +338,7 @@ public Action:SpawnEntities(Handle:timer)
 		else
 		{
 			// Create Entity
-			new ent = CreateEntityByName(classname);
+			int ent = CreateEntityByName(classname);
 			
 			if (ent != -1)
 			{
@@ -443,12 +350,12 @@ public Action:SpawnEntities(Handle:timer)
 	} while (KvGotoNextKey(kvMapConfig));
 	
 	KvRewind(kvMapConfig);
-	CloseHandle(kvMapConfig);
+	delete kvMapConfig;
 	
 	// Spawn Map-BuildIn-Entites
-	decl String:name[128];
-	new entCount = GetEntityCount();
-	for (new b = 1; b < entCount; b++)
+	char name[128];
+	int entCount = GetEntityCount();
+	for (int b = 1; b < entCount; b++)
 	{
 		if (IsValidEntity(b) && IsValidEdict(b))
 		{
@@ -482,7 +389,7 @@ public Action:SpawnEntities(Handle:timer)
 					Vortigaunt_Spawn(position);
 				else if (StrEqual(name, "npc_zombie"))
 					Zombie_Spawn(position);
-				else if(StrEqual(name, "npc_random"))
+				else if (StrEqual(name, "npc_random"))
 					BaseNPC_SpawnByName("", position);
 			}
 			/*
@@ -524,16 +431,16 @@ public Action:SpawnEntities(Handle:timer)
 	Store entity in file
 	------------------------------------------------------------------------------------------
 */
-stock bool:SaveEntity(ent)
+stock bool SaveEntity(int ent)
 {
-	decl String:path[64];
-	decl String:map[32];
-	decl String:sEnt[32];
+	char path[64];
+	char map[32];
+	char sEnt[32];
 
 	GetCurrentMap(map, 32);
 	BuildPath(Path_SM, path, 64, "configs/ec_maps/%s.txt", map);
 
-	new Handle:kvMapConfig = INVALID_HANDLE;
+	Handle kvMapConfig = INVALID_HANDLE;
 	kvMapConfig = CreateKeyValues(map, map, "");
 	FileToKeyValues(kvMapConfig, path);
 	IntToString(ent, sEnt, 32);
@@ -545,30 +452,30 @@ stock bool:SaveEntity(ent)
 	KvJumpToKey(kvMapConfig, sEnt, true);
 	
 	// Get Classname
-	decl String:classname[32];
+	char classname[32];
 	GetEdictClassname(ent, classname, 32);
 	KvSetString(kvMapConfig, "classname", classname);
 	if (strncmp("prop_", classname, 5, false) == 0)
 	{
 		// Get Modelname
-		decl String:modelname[64];
+		char modelname[64];
 		GetEntPropString(ent, Prop_Data, "m_ModelName", modelname, 64);
 		KvSetString(kvMapConfig, "modelname", modelname);
 		
 		// Get Position
-		decl Float:position[3];
+		float position[3];
 		GetEntPropVector(ent, Prop_Send, "m_vecOrigin", position);
 		KvSetVector(kvMapConfig, "position", position);
 		
 		// Get Angle
-		decl Float:angle[3];
+		float angle[3];
 		GetEntPropVector(ent, Prop_Send, "m_angRotation", angle);
 		KvSetVector(kvMapConfig, "angle", angle);
 	}
 	else if (strncmp("weapon_", classname, 6, false) == 0)
 	{
 		// Get Position
-		decl Float:position[3];
+		float position[3];
 		GetEntPropVector(ent, Prop_Send, "m_vecOrigin", position);
 		KvSetVector(kvMapConfig, "position", position);
 		
@@ -579,14 +486,14 @@ stock bool:SaveEntity(ent)
 	else if (strncmp("npc_", classname, 4, false) == 0)
 	{
 		// Get Position
-		decl Float:position[3];
+		float position[3];
 		GetEntPropVector(ent, Prop_Send, "m_vecOrigin", position);
 		KvSetVector(kvMapConfig, "position", position);
 	}
 	
 	KvRewind(kvMapConfig);
 	KeyValuesToFile(kvMapConfig, path);
-	CloseHandle(kvMapConfig);
+	delete kvMapConfig;
 	
 	return (true);
 }
@@ -597,16 +504,16 @@ stock bool:SaveEntity(ent)
 	Load entites from file
 	------------------------------------------------------------------------------------------
 */
-stock RemoveEntityFromStore(ent)
+stock void RemoveEntityFromStore(int ent)
 {
-	decl String:path[64];
-	decl String:map[32];
-	decl String:sEnt[32];
+	char path[64];
+	char map[32];
+	char sEnt[32];
 	
 	GetCurrentMap(map, 32);
 	BuildPath(Path_SM, path, 64, "configs/ec_maps/%s.txt", map);
 	
-	new Handle:kvMapConfig = INVALID_HANDLE;
+	Handle kvMapConfig = INVALID_HANDLE;
 	kvMapConfig = CreateKeyValues(map);
 	FileToKeyValues(kvMapConfig, path);
 	
@@ -615,7 +522,7 @@ stock RemoveEntityFromStore(ent)
 	
 	IntToString(GetEntProp(ent, Prop_Data, "m_iHammerID", 4), sEnt, 32);
 
-	decl String:buffer[9];
+	char buffer[9];
 	do
 	{
 		KvGetSectionName(kvMapConfig, buffer, sizeof(buffer));
@@ -629,7 +536,7 @@ stock RemoveEntityFromStore(ent)
 	
 	KvRewind(kvMapConfig);
 	KeyValuesToFile(kvMapConfig, path);
-	CloseHandle(kvMapConfig);
+	delete kvMapConfig;
 }
 
 /* 
@@ -638,18 +545,18 @@ stock RemoveEntityFromStore(ent)
 	Is our client be able to use the command ?
 	------------------------------------------------------------------------------------------
 */
-stock bool:CanUseCMD(client, Handle:cvarFlag, bool:giveFeedback=true)
+stock bool CanUseCMD(int client, Handle cvarFlag, bool giveFeedback = true)
 {
 	if (client)
 	{
-		new String:sFlag[2];
+		char sFlag[2];
 		GetConVarString(cvarFlag, sFlag, sizeof(sFlag));
-		new AdminFlag:theFlag;
+		AdminFlag theFlag;
 
 		if (!sFlag[0]) // Allowed to everyone ? -.-
 			return (true);	
 		
-		new AdminId:clientAdminID = GetUserAdmin(client);
+		AdminId clientAdminID = GetUserAdmin(client);
 		
 		if (clientAdminID != INVALID_ADMIN_ID && FindFlagByChar(sFlag[0], theFlag) 
 			&& GetAdminFlag(clientAdminID, theFlag))
@@ -674,9 +581,9 @@ stock bool:CanUseCMD(client, Handle:cvarFlag, bool:giveFeedback=true)
 	Or is seeks for an entity
 	------------------------------------------------------------------------------------------
 */
-stock GetObject(client, bool:hitSelf=true)
+stock int GetObject(int client, bool hitSelf = true)
 {
-	new ent = -1;
+	int ent = -1;
 	
 	if (IsClientConnectedIngame(client))
 	{
@@ -690,7 +597,7 @@ stock GetObject(client, bool:hitSelf=true)
 		
 		if (IsValidEntity(ent) && IsValidEdict(ent))
 		{
-			new String:edictname[64];
+			char edictname[64];
 			GetEdictClassname(ent, edictname, 64);
 			if (StrEqual(edictname, "worldspawn"))
 			{
@@ -715,11 +622,11 @@ stock GetObject(client, bool:hitSelf=true)
 	Send a KeyHintText to all clients
 	------------------------------------------------------------------------------------------
 */
-stock SendKeyHintTextToAll(String:sMessage[], any:...)
+stock void SendKeyHintTextToAll(char[] sMessage, any ...)
 {
-	decl String:sBuffer[192];
+	char sBuffer[192];
 	VFormat(sBuffer, sizeof(sBuffer), sMessage, 2);
-	new Handle:hBuffer = StartMessageAll("KeyHintText");
+	Handle hBuffer = StartMessageAll("KeyHintText");
 	BfWriteByte(hBuffer, 1);
 	BfWriteString(hBuffer, sBuffer);
 	EndMessage();
@@ -732,13 +639,13 @@ stock SendKeyHintTextToAll(String:sMessage[], any:...)
 	This code is based on the code from ... I just cannot remember :(
 	------------------------------------------------------------------------------------------
 */
-stock Colorize(client, color[4], bool:weaponOnly=false)
+stock void Colorize(int client, int color[4], bool weaponOnly = false)
 {
 	//new maxents = GetMaxEntities();
 	// Colorize player and weapons
-	new m_hMyWeapons = FindSendPropOffs("CBasePlayer", "m_hMyWeapons");	
+	int m_hMyWeapons = FindSendPropInfo("CBasePlayer", "m_hMyWeapons");	
 
-	for (new i = 0, weapon; i < 47; i += 4)
+	for (int i = 0, weapon; i < 47; i += 4)
 	{
 		weapon = GetEntDataEnt2(client, m_hMyWeapons + i);
 	
@@ -774,51 +681,53 @@ stock Colorize(client, color[4], bool:weaponOnly=false)
 	This code was borrowed from Nican's spraytracer
 	------------------------------------------------------------------------------------------
 */
-stock bool:GetPlayerEye(client, Float:pos[3])
+stock bool GetPlayerEye(int client, float pos[3])
 {
-	new Float:vAngles[3], Float:vOrigin[3];
+	float vAngles[3];
+	float vOrigin[3];
 
 	GetClientEyePosition(client, vOrigin);
 	GetClientEyeAngles(client, vAngles);
 
-	new Handle:trace = TR_TraceRayFilterEx(vOrigin, vAngles, MASK_SHOT, RayType_Infinite, TraceEntityFilterPlayer);
+	Handle trace = TR_TraceRayFilterEx(vOrigin, vAngles, MASK_SHOT, RayType_Infinite, TraceEntityFilterPlayer);
 
-	if(TR_DidHit(trace))
+	if (TR_DidHit(trace))
 	{
 	 	//This is the first function i ever saw that anything comes before the handle
 		TR_GetEndPosition(pos, trace);
-		CloseHandle(trace);
+		delete trace;
 		return (true);
 	}
 
-	CloseHandle(trace);
+	delete trace;
 	return (false);
 }
 
-stock bool:GetPlayerEyeWithAngle(client, Float:vPos[3], Float:vAngles[3])
+stock bool GetPlayerEyeWithAngle(int client, float vPos[3], float vAngles[3])
 {
 	GetClientEyePosition(client, vPos);
 	GetClientEyeAngles(client, vAngles);
 
-	new Handle:trace = TR_TraceRayFilterEx(vPos, vAngles, MASK_SHOT, RayType_Infinite, TraceEntityFilterPlayer);
+	Handle trace = TR_TraceRayFilterEx(vPos, vAngles, MASK_SHOT, RayType_Infinite, TraceEntityFilterPlayer);
 
-	if(TR_DidHit(trace))
+	if (TR_DidHit(trace))
 	{
 		TR_GetEndPosition(vPos, trace);
 		TR_GetPlaneNormal(trace, vAngles);
 		GetVectorAngles(vAngles, vAngles);
 		
-		CloseHandle(trace);
+		delete trace;
 		return (true);
 	}
 
-	CloseHandle(trace);
+	delete trace;
 	return (false);
 }
 
-public TraceToEntity(client)
+public int TraceToEntity(int client)
 {
-	new Float:vecClientEyePos[3], Float:vecClientEyeAng[3];
+	float vecClientEyePos[3];
+	float vecClientEyeAng[3];
 	GetClientEyePosition(client, vecClientEyePos);
 	GetClientEyeAngles(client, vecClientEyeAng);    
 
@@ -830,14 +739,14 @@ public TraceToEntity(client)
 	return (-1);
 }
 
-public bool:TraceASDF(entity, mask, any:data)
+public bool TraceASDF(int entity, int mask, any data)
 {
 	return (data != entity);
 }
 
-public bool:TraceEntityFilterPlayer(entity, contentsMask)
+public bool TraceEntityFilterPlayer(int entity, int contentsMask)
 {
-	return (entity > GetMaxClients() || !entity);
+	return (entity > MaxClients || !entity);
 }
 
 /* 
@@ -846,7 +755,7 @@ public bool:TraceEntityFilterPlayer(entity, contentsMask)
 	Thanks to Mitchell (http://forums.alliedmods.net/showthread.php?t=174743#cl-privacy)
 	------------------------------------------------------------------------------------------
 */
-stock DrawBoundingBox_Internal(const Float:start[3], const Float:end[3], client = 0, Float:time = 10.0)
+stock void DrawBoundingBox_Internal(const float start[3], const float end[3], int client = 0, float time = 10.0)
 {
 	TE_SetupBeamPoints(start, end, gLaser1, 0, 0, 0, time, 3.0, 3.0, 7, 0.0, {150, 255, 150, 255}, 0);
 
@@ -856,17 +765,18 @@ stock DrawBoundingBox_Internal(const Float:start[3], const Float:end[3], client 
 		TE_SendToAll();
 }
 
-stock DrawBoundingBox(ent, client = 0, Float:time = 10.0)
+stock void DrawBoundingBox(int ent, int client = 0, float time = 10.0)
 {
-    new Float:posMin[4][3], Float:posMax[4][3];
-    new Float:orig[3];
+    float posMin[4][3];
+    float posMax[4][3];
+    float orig[3];
     
     GetEntPropVector(ent, Prop_Send, "m_vecMins", posMin[0]);
     GetEntPropVector(ent, Prop_Send, "m_vecMaxs", posMax[0]);
     GetEntPropVector(ent, Prop_Send, "m_vecOrigin", orig);
 
     // Incase the entity is a player i want to make the box fit..
-    new String:edictname[32];
+    char edictname[32];
     GetEdictClassname(ent, edictname, 32);
     if (StrEqual(edictname, "player"))
     {
@@ -947,7 +857,7 @@ stock DrawBoundingBox(ent, client = 0, Float:time = 10.0)
     DrawBoundingBox_Internal(posMin[2], posMin[1], client, time);
 }
 
-stock DrawDissolverBox_Internal(const Float:pos1[3], const Float:pos2[3])
+stock void DrawDissolverBox_Internal(const float pos1[3], const float pos2[3])
 {
 	TE_SetupEnergySplash(pos1, pos2, true);
 	TE_SendToAll();
@@ -956,17 +866,18 @@ stock DrawDissolverBox_Internal(const Float:pos1[3], const Float:pos2[3])
 	TE_SendToAll();
 }
 
-stock DrawDissolverBox(ent)
+stock void DrawDissolverBox(int ent)
 {
-    new Float:posMin[4][3], Float:posMax[4][3];
-    new Float:orig[3];
+    float posMin[4][3];
+    float posMax[4][3];
+    float orig[3];
     
     GetEntPropVector(ent, Prop_Send, "m_vecMins", posMin[0]);
     GetEntPropVector(ent, Prop_Send, "m_vecMaxs", posMax[0]);
     GetEntPropVector(ent, Prop_Send, "m_vecOrigin", orig);
 
     // Incase the entity is a player i want to make the box fit..
-    new String:edictname[32];
+    char edictname[32];
     GetEdictClassname(ent, edictname, 32);
     if (StrEqual(edictname, "player"))
     {
@@ -1048,12 +959,13 @@ stock DrawDissolverBox(ent)
 	Is going to replace the given entity so, that we can grab it
 	------------------------------------------------------------------------------------------
 */
-stock ReplacePhysicsEntity(ent)
+stock int ReplacePhysicsEntity(int ent)
 {
-	new Float:VecPos_Ent[3], Float:VecAng_Ent[3];
+	float VecPos_Ent[3];
+	float VecAng_Ent[3];
 
 	// Copy Entity
-	new String:model[128];
+	char model[128];
 	GetEntPropString(ent, Prop_Data, "m_ModelName", model, 128);
 	GetEntPropVector(ent, Prop_Send, "m_vecOrigin", VecPos_Ent);
 	GetEntPropVector(ent, Prop_Send, "m_angRotation", VecAng_Ent);
@@ -1080,12 +992,12 @@ stock ReplacePhysicsEntity(ent)
 }
 
 // Will modify all prop_physics and prop_dynamic_override that we are able to grab them
-public ReplacePhysics(Handle:timer)
+public void ReplacePhysics(Handle timer)
 {
 	LogError("Replacing physics");
-	new ents = GetMaxEntities()-100;
-	new String:edictname[128];
-	for (new i=GetMaxClients()+1; i<ents; i++)
+	int ents = GetMaxEntities()-100;
+	char edictname[128];
+	for (int i=MaxClients+1; i<ents; i++)
 	{
 		if (IsValidEdict(i) && IsValidEntity(i)) 
 		{
@@ -1105,22 +1017,22 @@ public ReplacePhysics(Handle:timer)
 	Draws the entity connections
 	------------------------------------------------------------------------------------------
 */
-public DrawEntityConnections(client, entity)
+public void DrawEntityConnections(int client, int entity)
 {
-	new entityCount = GetMaxEntities()-100;
-	new Float:vEntity1Pos[3];
+	int entityCount = GetMaxEntities()-100;
+	float vEntity1Pos[3];
 	
 	if (EntControlExtLoaded)
 	{
 		GetEntPropVector(entity, Prop_Send, "m_vecOrigin", vEntity1Pos);
 		
-		decl String:sClassname[64];
+		char sClassname[64];
 		GetEdictClassname(entity, sClassname, 64);
 		if (KvJumpToKey(kvEnts, sClassname) && KvJumpToKey(kvEnts, "output"))
 		{
 			KvGotoFirstSubKey(kvEnts, false);
 			
-			decl String:sectionName[24];
+			char sectionName[24];
 			do
 			{
 				KvGetSectionName(kvEnts, sectionName, sizeof(sectionName));
@@ -1134,22 +1046,23 @@ public DrawEntityConnections(client, entity)
 	}
 }
 
-public DrawEntityConnections_Internal(entityCount, client, entity, Float:vEntity1Pos[3], String:sOutput[24])
+public void DrawEntityConnections_Internal(int entityCount, int client, int entity, float vEntity1Pos[3], char sOutput[24])
 {
-	new String:sBuffer[64], String:sTargetName[64];
-	decl Float:vEntity2Pos[3];
+	char sBuffer[64];
+	char sTargetName[64];
+	float vEntity2Pos[3];
 	
 	sBuffer = sOutput;
-	new count = EC_Entity_GetOutputCount(entity, sBuffer);
+	int count = EC_Entity_GetOutputCount(entity, sBuffer);
 	
 	if (count != -1 && EC_Entity_GetOutputFirst(entity, sBuffer))
 	{
-		for (new i = 0; i < count; i++)
+		for (int i = 0; i < count; i++)
 		{
 			sBuffer = sOutput;
 			EC_Entity_GetOutputAt(entity, sBuffer, i);
 			
-			for (new ent = GetMaxClients()+1; ent < entityCount; ent++)
+			for (int ent = MaxClients+1; ent < entityCount; ent++)
 			{
 				if (IsValidEdict(ent) && IsValidEntity(ent)) 
 				{
@@ -1186,15 +1099,15 @@ public DrawEntityConnections_Internal(entityCount, client, entity, Float:vEntity
 #define FFADE_PURGE	0x0010        // Purges all other fades, replacing them with this one
 
 
-stock bool:MakeDamage(client, target, damage, damagetype, Float:damageradius, const Float:attackposition[3], const String:weaponname[] = "", bool:kill=true)
+stock bool MakeDamage(int client, int target, int damage, int damagetype, float damageradius, const float attackposition[3], const char[] weaponname = "", bool kill = true)
 {
-	new pointhurt = CreateEntityByName("point_hurt");
+	int pointhurt = CreateEntityByName("point_hurt");
 	
 	if (pointhurt != -1)
 	{
 		if (target != -1)
 		{
-			decl String:targetname[64];
+			char targetname[64];
 			Format(targetname, 128, "%f%f", GetEngineTime(), GetRandomFloat());
 			DispatchKeyValue(target, "TargetName", targetname);
 			DispatchKeyValue(pointhurt, "DamageTarget", targetname);
@@ -1204,7 +1117,7 @@ stock bool:MakeDamage(client, target, damage, damagetype, Float:damageradius, co
 
 		DispatchKeyValueVector(pointhurt, "Origin", attackposition);
 		
-		decl String:number[64];
+		char number[64];
 		IntToString(damage, number, 64);
 		DispatchKeyValue(pointhurt,"Damage", number);
 		
@@ -1213,12 +1126,12 @@ stock bool:MakeDamage(client, target, damage, damagetype, Float:damageradius, co
 		
 		DispatchKeyValueFloat(pointhurt, "DamageRadius", damageradius);
 		
-		if(!StrEqual(weaponname, "", false))
+		if (!StrEqual(weaponname, "", false))
 			DispatchKeyValue(pointhurt,"classname", weaponname);
 		
 		DispatchSpawn(pointhurt);
 		
-		if(IsClientConnectedIngame(client))
+		if (IsClientConnectedIngame(client))
 			AcceptEntityInput(pointhurt, "Hurt", client);
 		else
 			AcceptEntityInput(pointhurt, "Hurt", 0);
@@ -1232,40 +1145,40 @@ stock bool:MakeDamage(client, target, damage, damagetype, Float:damageradius, co
 		return (false);
 }
 
-stock bool:makeexplosion(attacker = 0, inflictor = -1, const Float:attackposition[3], const String:weaponname[] = "", magnitude = 100, radiusoverride = 0, Float:damageforce = 0.0, flags = 0){
+stock bool makeexplosion(int attacker = 0, int inflictor = -1, const float attackposition[3], const char[] weaponname = "", int magnitude = 100, int radiusoverride = 0, float damageforce = 0.0, int flags = 0){
 	
-	new explosion = CreateEntityByName("env_explosion");
+	int explosion = CreateEntityByName("env_explosion");
 	
-	if(explosion != -1)
+	if (explosion != -1)
 	{
 		DispatchKeyValueVector(explosion, "Origin", attackposition);
 		
-		decl String:intbuffer[64];
+		char intbuffer[64];
 		IntToString(magnitude, intbuffer, 64);
 		DispatchKeyValue(explosion,"iMagnitude", intbuffer);
-		if(radiusoverride > 0)
+		if (radiusoverride > 0)
 		{
 			IntToString(radiusoverride, intbuffer, 64);
 			DispatchKeyValue(explosion,"iRadiusOverride", intbuffer);
 		}
 		
-		if(damageforce > 0.0)
+		if (damageforce > 0.0)
 			DispatchKeyValueFloat(explosion,"DamageForce", damageforce);
 
-		if(flags != 0)
+		if (flags != 0)
 		{
 			IntToString(flags, intbuffer, 64);
 			DispatchKeyValue(explosion,"spawnflags", intbuffer);
 		}
 
-		if(!StrEqual(weaponname, "", false))
+		if (!StrEqual(weaponname, "", false))
 			DispatchKeyValue(explosion,"classname", weaponname);
 
 		DispatchSpawn(explosion);
-		if(IsClientConnectedIngame(attacker))
+		if (IsClientConnectedIngame(attacker))
 			SetEntPropEnt(explosion, Prop_Send, "m_hOwnerEntity", attacker);
 
-		if(inflictor != -1)
+		if (inflictor != -1)
 			SetEntPropEnt(explosion, Prop_Data, "m_hInflictor", inflictor);
 			
 		AcceptEntityInput(explosion, "Explode");
@@ -1277,23 +1190,23 @@ stock bool:makeexplosion(attacker = 0, inflictor = -1, const Float:attackpositio
 		return (false);
 }
 
-stock bool:IsClientConnectedIngame(client)
+stock bool IsClientConnectedIngame(int client)
 {
-	if(client > 0 && client <= MaxClients)
-		if(IsClientInGame(client))
+	if (client > 0 && client <= MaxClients)
+		if (IsClientInGame(client))
 			return (true);
 
 	return (false);
 }
 
-stock setm_takedamage(entity, type)
+stock void setm_takedamage(int entity, int type)
 {
 	SetEntProp(entity, Prop_Data, "m_takedamage", type);
 }
 
-stock makeviewpunch(client, Float:angle[3])
+stock void makeviewpunch(int client, float angle[3])
 {
-	decl Float:oldangle[3];
+	float oldangle[3];
 	
 	GetEntPropVector(client, Prop_Send, "m_vecPunchAngle", oldangle);
 	
@@ -1307,12 +1220,12 @@ stock makeviewpunch(client, Float:angle[3])
 
 
 // Thanks to V0gelz
-stock env_shooter(Float:Angles[3], Float:iGibs, Float:Delay, Float:GibAngles[3], Float:Velocity, Float:Variance, Float:Giblife, Float:Location[3], String:ModelType[])
+stock void env_shooter(float Angles[3], float iGibs, float Delay, float GibAngles[3], float Velocity, float Variance, float Giblife, float Location[3], char[] ModelType)
 {
 	//decl Ent;
 
 	//Initialize:
-	new Ent = CreateEntityByName("env_shooter");
+	int Ent = CreateEntityByName("env_shooter");
 		
 	//Spawn:
 
@@ -1321,7 +1234,7 @@ stock env_shooter(Float:Angles[3], Float:iGibs, Float:Delay, Float:GibAngles[3],
 
   	//if (Ent>0 && IsValidEdict(Ent))
 
-	if(Ent>0 && IsValidEntity(Ent) && IsValidEdict(Ent))
+	if (Ent>0 && IsValidEntity(Ent) && IsValidEdict(Ent))
   	{
 
 		//Properties:
@@ -1375,19 +1288,19 @@ stock env_shooter(Float:Angles[3], Float:iGibs, Float:Delay, Float:GibAngles[3],
 
 		//Delete:
 		//AcceptEntityInput(Ent, "kill");
-		RemoveEntity(Ent, 1.0);
+		KillEntity(Ent, 1.0);
 	}
 }
 
-stock env_shake(Float:Origin[3], Float:Amplitude, Float:Radius, Float:Duration, Float:Frequency)
+stock void env_shake(float Origin[3], float Amplitude, float Radius, float Duration, float Frequency)
 {
-	decl Ent;
+	int Ent;
 
 	//Initialize:
 	Ent = CreateEntityByName("env_shake");
 		
 	//Spawn:
-	if(DispatchSpawn(Ent))
+	if (DispatchSpawn(Ent))
 	{
 		//Properties:
 		DispatchKeyValueFloat(Ent, "amplitude", Amplitude);
@@ -1405,16 +1318,16 @@ stock env_shake(Float:Origin[3], Float:Amplitude, Float:Radius, Float:Duration, 
 		TeleportEntity(Ent, Origin, NULL_VECTOR, NULL_VECTOR);
 
 		//Delete:
-		RemoveEntity(Ent, 30.0);
+		KillEntity(Ent, 30.0);
 	}
 }
 
-stock bool:IsEntityCollidable(entity, bool:includeplayer = true, bool:includehostage = true, bool:includeprojectile = true)
+stock bool IsEntityCollidable(int entity, bool includeplayer = true, bool includehostage = true, bool includeprojectile = true)
 {
-	decl String:classname[64];
+	char classname[64];
 	GetEdictClassname(entity, classname, 64);
 	
-	if((StrEqual(classname, "player", false) && includeplayer) || (StrEqual(classname, "hostage_entity", false) && includehostage)
+	if ((StrEqual(classname, "player", false) && includeplayer) || (StrEqual(classname, "hostage_entity", false) && includehostage)
 		|| StrContains(classname, "physics", false) != -1 || StrContains(classname, "prop", false) != -1
 		|| StrContains(classname, "door", false)  != -1 || StrContains(classname, "weapon", false)  != -1
 		|| StrContains(classname, "break", false)  != -1 || ((StrContains(classname, "projectile", false)  != -1) && includeprojectile)
@@ -1436,9 +1349,9 @@ stock bool:IsEntityCollidable(entity, bool:includeplayer = true, bool:includehos
 	return (false);
 }
 
-stock sendfademsg(client, duration, holdtime, fadeflag, r, g, b, a)
+stock void sendfademsg(int client, int duration, int holdtime, int fadeflag, int r, int g, int b, int a)
 {
-	new Handle:fademsg;
+	Handle fademsg;
 	
 	if (client == 0)
 		fademsg = StartMessageAll("Fade");
@@ -1455,9 +1368,9 @@ stock sendfademsg(client, duration, holdtime, fadeflag, r, g, b, a)
 	EndMessage();
 }
 
-public bool:tracerayfilterrocket(entity, mask, any:data)
+public bool tracerayfilterrocket(int entity, int mask, any data)
 {
-	if(entity != data && GetEntPropEnt(entity, Prop_Send, "m_hOwnerEntity") != data)
+	if (entity != data && GetEntPropEnt(entity, Prop_Send, "m_hOwnerEntity") != data)
 		return (true);
 	else
 		return (false);

@@ -12,15 +12,18 @@
 #include <sdktools>
 #include <entcontrol>
 
-new bool:navMeshLoaded = false;
+#pragma newdecls required
+#pragma semicolon 1
 
-public OnPluginStart()
+bool navMeshLoaded = false;
+
+public void OnPluginStart()
 {
 	HookEvent("player_spawn", OnPlayerSpawn);
 	RegAdminCmd("sm_teletoranpos", Command_TeleportToRandomPos, ADMFLAG_GENERIC);
 }
 
-public OnEventShutdown()
+public void OnEventShutdown()
 {
 	UnhookEvent("player_spawn", OnPlayerSpawn);
 }
@@ -31,7 +34,7 @@ public OnEventShutdown()
 	Store all the positions once. Only if there is a valid navmesh.
 	------------------------------------------------------------------------------------------
 */
-public OnMapStart()
+public void OnMapStart()
 {
 	// Load the nav-mesh of the current map
 	if (EC_Nav_Load())
@@ -53,7 +56,7 @@ public OnMapStart()
 	}
 }
 
-public OnMapEnd()
+public void OnMapEnd()
 {
 	navMeshLoaded = false;
 }
@@ -64,51 +67,51 @@ public OnMapEnd()
 	Teleport player to a "random" spawn position after has been spawned
 	------------------------------------------------------------------------------------------
 */
-public Action:OnPlayerSpawn(Handle:event, const String:name[], bool:dontBroadcast)
+public Action OnPlayerSpawn(Handle event, const char[] name, bool dontBroadcast)
 {
-	new client = GetClientOfUserId(GetEventInt(event, "userid"));
+	int client = GetClientOfUserId(GetEventInt(event, "userid"));
 
 	TeleToRandomPosition(client);
 	
-	return (Plugin_Continue);
+	return Plugin_Continue;
 }
 
-public TeleToRandomPosition(client)
+public void TeleToRandomPosition(int client)
 {
-	new Float:position[3];
+	float position[3];
 	if (navMeshLoaded && EC_Nav_GetNextHidingSpot(position))
 	{
 		position[2] += 10.0;
 		
-		TeleportEntity(client, position, NULL_VECTOR, Float:{10.0, 10.0, 10.0});
+		TeleportEntity(client, position, NULL_VECTOR, view_as<float>( {10.0, 10.0, 10.0} ) );
 		
-		new checksum = RoundToFloor(position[0] + position[1] + position[2]);
+		int checksum = RoundToFloor(position[0] + position[1] + position[2]);
 		
-		new Handle:data;
+		Handle data;
 		CreateDataTimer(0.1, CheckStuckTimer, data, TIMER_FLAG_NO_MAPCHANGE);
 		WritePackCell(data, client);
 		WritePackCell(data, checksum);
 	}
 }
 
-public Action:CheckStuckTimer(Handle:Timer, Handle:data)
+public Action CheckStuckTimer(Handle Timer, Handle data)
 {
-	new Float:position[3];
+	float position[3];
 	
 	ResetPack(data);
-	new client = ReadPackCell(data);
-	new checksum = ReadPackCell(data);
+	int client = ReadPackCell(data);
+	int checksum = ReadPackCell(data);
 
 	GetEntPropVector(client, Prop_Send, "m_vecOrigin", position);
 	
-	new checksumNow = RoundToFloor(position[0] + position[1] + position[2]);
+	int checksumNow = RoundToFloor(position[0] + position[1] + position[2]);
 	
 	checksumNow = checksum-checksumNow;
 	
 	if (checksumNow > -1 && checksumNow < 1)
 		TeleToRandomPosition(client);
 	
-	return (Plugin_Stop);
+	return Plugin_Stop;
 }
 
 /* 
@@ -117,9 +120,9 @@ public Action:CheckStuckTimer(Handle:Timer, Handle:data)
 	THis function will spawn a zombie on the players-aim-position
 	------------------------------------------------------------------------------------------
 */
-public Action:Command_TeleportToRandomPos(client, args)
+public Action Command_TeleportToRandomPos(int client, int args)
 {
 	TeleToRandomPosition(client);
 
-	return (Plugin_Handled);
+	return Plugin_Handled;
 }

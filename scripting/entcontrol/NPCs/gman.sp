@@ -1,3 +1,7 @@
+/* put the line below after all of the includes!
+#pragma newdecls required
+*/
+
 /* 
 	------------------------------------------------------------------------------------------
 	EntControl::Gman
@@ -5,7 +9,7 @@
 	------------------------------------------------------------------------------------------
 */
 
-public InitGMan()
+public void InitGMan()
 {
 	PrecacheModel("models/gman_high.mdl");
 	PrecacheSound("vo/Citadel/gman_exit03.wav");
@@ -18,11 +22,11 @@ public InitGMan()
 	Command_GMan
 	------------------------------------------------------------------------------------------
 */
-public Action:Command_GMan(client, args)
+public Action Command_GMan(int client, int args)
 {
 	if (!CanUseCMD(client, gAdminFlagNPC)) return (Plugin_Handled);
 	
-	decl Float:position[3];
+	float position[3];
 	if (GetPlayerEye(client, position))
 		GMan_Spawn(position);
 	else
@@ -36,10 +40,10 @@ public Action:Command_GMan(client, args)
 	GMan_Spawn
 	------------------------------------------------------------------------------------------
 */
-public GMan_Spawn(Float:position[3])
+public void GMan_Spawn(float position[3])
 {
 	// Spawn
-	new monster = BaseNPC_Spawn(position, "models/gman.mdl", GManSeekThink, "npc_gman", "Wave");
+	int monster = BaseNPC_Spawn(position, "models/gman.mdl", GManSeekThink, "npc_gman", "Wave");
 
 	SDKHook(monster, SDKHook_OnTakeDamage, GManDamageHook);
 	
@@ -51,14 +55,15 @@ public GMan_Spawn(Float:position[3])
 	GManAttackThink
 	------------------------------------------------------------------------------------------
 */
-public Action:GManSeekThink(Handle:timer, any:monsterRef)
+public Action GManSeekThink(Handle timer, any monsterRef)
 {
-	new monster = EntRefToEntIndex(monsterRef);
+	int monster = EntRefToEntIndex(monsterRef);
 	
 	if (monster != INVALID_ENT_REFERENCE && IsValidEntity(monster))
 	{
-		new target = BaseNPC_GetTarget(monster);
-		decl Float:vClientPosition[3], Float:vEntPosition[3];
+		int target = BaseNPC_GetTarget(monster);
+		float vClientPosition[3];
+		float vEntPosition[3];
 		
 		GetEntPropVector(monster, Prop_Send, "m_vecOrigin", vEntPosition);
 		
@@ -94,13 +99,13 @@ public Action:GManSeekThink(Handle:timer, any:monsterRef)
 	GManTauntThink
 	------------------------------------------------------------------------------------------
 */
-public Action:GManTauntThink(Handle:timer, any:monsterRef)
+public Action GManTauntThink(Handle timer, any monsterRef)
 {
-	new monster = EntRefToEntIndex(monsterRef);
+	int monster = EntRefToEntIndex(monsterRef);
 	
 	if (monster != INVALID_ENT_REFERENCE && IsValidEntity(monster))
 	{
-		decl Float:vEntPosition[3];
+		float vEntPosition[3];
 		
 		GetEntPropVector(monster, Prop_Send, "m_vecOrigin", vEntPosition);
 		
@@ -118,7 +123,7 @@ public Action:GManTauntThink(Handle:timer, any:monsterRef)
 	HeadCrabDamageHook
 	------------------------------------------------------------------------------------------
 */
-public Action:GManDamageHook(monster, &attacker, &inflictor, &Float:damage, &damagetype)
+public Action GManDamageHook(int monster, int& attacker, int& inflictor, float& damage, int& damagetype)
 {
 	if (BaseNPC_Hurt(monster, attacker, RoundToZero(damage), "player/pl_pain7.wav"))
 	{

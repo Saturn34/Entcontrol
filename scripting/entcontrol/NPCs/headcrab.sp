@@ -1,3 +1,7 @@
+/* put the line below after all of the includes!
+#pragma newdecls required
+*/
+
 /* 
 	------------------------------------------------------------------------------------------
 	EntControl::Headcrab
@@ -5,7 +9,7 @@
 	------------------------------------------------------------------------------------------
 */
 
-public InitHeadCrab()
+public void InitHeadCrab()
 {
 	PrecacheModel("models/headcrabclassic.mdl");
 	PrecacheSound("npc/headcrab/attack2.wav");
@@ -18,11 +22,11 @@ public InitHeadCrab()
 	Command_HeadCrab
 	------------------------------------------------------------------------------------------
 */
-public Action:Command_HeadCrab(client, args)
+public Action Command_HeadCrab(int client, int args)
 {
 	if (!CanUseCMD(client, gAdminFlagNPC)) return (Plugin_Handled);
 	
-	decl Float:position[3];
+	float position[3];
 	if (GetPlayerEye(client, position))
 		HeadCrab_Spawn(position, client);
 	else
@@ -36,10 +40,10 @@ public Action:Command_HeadCrab(client, args)
 	HeadCrab_Spawn
 	------------------------------------------------------------------------------------------
 */
-stock HeadCrab_Spawn(Float:position[3], owner=0)
+stock void HeadCrab_Spawn(float position[3], int owner = 0)
 {
 	// Spawn
-	new monster = BaseNPC_Spawn(position, "models/headcrabclassic.mdl", HeadCrabSeekThink, "npc_headcrab", "Idle01");
+	int monster = BaseNPC_Spawn(position, "models/headcrabclassic.mdl", HeadCrabSeekThink, "npc_headcrab", "Idle01");
 
 	SDKHook(monster, SDKHook_OnTakeDamage, HeadCrabDamageHook);
 	
@@ -51,18 +55,20 @@ stock HeadCrab_Spawn(Float:position[3], owner=0)
 	HeadCrabSeekThink
 	------------------------------------------------------------------------------------------
 */
-public Action:HeadCrabSeekThink(Handle:timer, any:monsterRef)
+public Action HeadCrabSeekThink(Handle timer, any monsterRef)
 {
-	new monster = EntRefToEntIndex(monsterRef);
+	int monster = EntRefToEntIndex(monsterRef);
 	
 	if (monster != INVALID_ENT_REFERENCE && IsValidEntity(monster))
 	{
-		new target = BaseNPC_GetTarget(monster);
-		decl Float:vClientPosition[3], Float:vEntPosition[3], Float:vAngle[3];
+		int target = BaseNPC_GetTarget(monster);
+		float vClientPosition[3];
+		float vEntPosition[3];
+		float vAngle[3];
 		
 		GetEntPropVector(monster, Prop_Send, "m_vecOrigin", vEntPosition);
 		
-		new owner = BaseNPC_GetOwner(monster);
+		int owner = BaseNPC_GetOwner(monster);
 		if (owner) // Attached to client ?
 		{
 			if (IsPlayerAlive(owner))
@@ -103,7 +109,7 @@ public Action:HeadCrabSeekThink(Handle:timer, any:monsterRef)
 					
 					BaseNPC_SetAnimation(monster, "canal5b_sewer_jump");
 					
-					new Handle:data;
+					Handle data;
 					CreateDataTimer(0.5, HeadCrabAttachToClient, data);
 					WritePackCell(data, EntIndexToEntRef(monster));
 					WritePackCell(data, target);
@@ -133,11 +139,11 @@ public Action:HeadCrabSeekThink(Handle:timer, any:monsterRef)
 	HeadCrabAttachToClient
 	------------------------------------------------------------------------------------------
 */
-public Action:HeadCrabAttachToClient(Handle:timer, Handle:data)
+public Action HeadCrabAttachToClient(Handle timer, Handle data)
 {
 	ResetPack(data);
-	new monster = EntRefToEntIndex(ReadPackCell(data));
-	new target = ReadPackCell(data);
+	int monster = EntRefToEntIndex(ReadPackCell(data));
+	int target = ReadPackCell(data);
 	/*
 	decl String:entIndex[32];
 	IntToString(target, entIndex, sizeof(entIndex)-1);
@@ -186,7 +192,7 @@ public Action:HeadCrabAttachToClient(Handle:timer, Handle:data)
 	HeadCrabDamageHook
 	------------------------------------------------------------------------------------------
 */
-public Action:HeadCrabDamageHook(monster, &attacker, &inflictor, &Float:damage, &damagetype)
+public Action HeadCrabDamageHook(int monster, int& attacker, int& inflictor, float& damage, int& damagetype)
 {
 	if (BaseNPC_Hurt(monster, attacker, RoundToZero(damage), "npc/headcrab/pain2.wav"))
 	{

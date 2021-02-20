@@ -1,3 +1,7 @@
+/* put the line below after all of the includes!
+#pragma newdecls required
+*/
+
 /* 
 	------------------------------------------------------------------------------------------
 	EntControl::BaseNPC
@@ -8,13 +12,13 @@
 //#define DEBUG
 
 //new gDebugBeam;
-new gBlood1;
-new gBloodDrop1;
-new player; // Can be global ;)
-new gNPCCount;
-new gLastKilledNPC;
+int gBlood1;
+int gBloodDrop1;
+int player; // Can be global ;)
+int gNPCCount;
+int gLastKilledNPC;
 
-public InitBaseNPC()
+public void InitBaseNPC()
 {
 	PrecacheModel("models/blackout.mdl");
 	
@@ -28,7 +32,7 @@ public InitBaseNPC()
 	HookEvent("hostage_killed", OnHostageKilled, EventHookMode_Pre);
 	
 	// Hook hostage-sound
-	AddNormalSoundHook(NormalSHook:BaseNPC_HookHostageSound);
+	AddNormalSoundHook(view_as<NormalSHook>(BaseNPC_HookHostageSound));
 	
 	#if defined DEBUG
 		LogMessage("InitBaseNPC()");
@@ -40,16 +44,16 @@ public InitBaseNPC()
 	BaseNPC_Spawn
 	------------------------------------------------------------------------------------------
 */
-stock BaseNPC_Spawn(Float:vEntPosition[3], String:model[128], Timer:func, String:classname[32] = "", String:idleAnimation[] = "idle", owner = 0)
+stock int BaseNPC_Spawn(float vEntPosition[3], char model[128], Timer func, char classname[32] = "", char[] idleAnimation = "idle", int owner = 0)
 {
-	new String:entIndex_tmp[16];
-	new health;
-	new Float:thinkrate, Float:friction;
+	char entIndex_tmp[16];
+	int health;
+	float thinkrate, friction;
 	
 	BaseNPC_LoadMonsterConfig(classname, thinkrate, friction, health);
 	
-	new monster = CreateEntityByName("hostage_entity");
-	new monster_tmp = CreateEntityByName("prop_dynamic_ornament"); // prop_dynamic_ornament
+	int monster = CreateEntityByName("hostage_entity");
+	int monster_tmp = CreateEntityByName("prop_dynamic_ornament"); // prop_dynamic_ornament
 	
 	IntToString(EntIndexToEntRef(monster_tmp), entIndex_tmp, sizeof(entIndex_tmp)-1);
 	
@@ -98,7 +102,7 @@ stock BaseNPC_Spawn(Float:vEntPosition[3], String:model[128], Timer:func, String
 	BaseNPC_SpawnByName
 	------------------------------------------------------------------------------------------
 */
-public BaseNPC_SpawnByName(String:sNPCName[], Float:vEntPosition[3])
+public void BaseNPC_SpawnByName(char[] sNPCName, float vEntPosition[3])
 {
 	if (StrEqual(sNPCName, "npc_antlion"))
 		AntLion_Spawn(vEntPosition);
@@ -133,11 +137,11 @@ public BaseNPC_SpawnByName(String:sNPCName[], Float:vEntPosition[3])
 	BaseNPC_IsNPC
 	------------------------------------------------------------------------------------------
 */
-stock bool:BaseNPC_IsNPC(monster)
+stock bool BaseNPC_IsNPC(int monster)
 {
 	if (IsValidEdict(monster) && IsValidEntity(monster))
 	{
-		new String:edictname[32];
+		char edictname[32];
 		GetEdictClassname(monster, edictname, 32);
 		
 		if (StrContains(edictname, "npc_") == 0)
@@ -152,7 +156,7 @@ stock bool:BaseNPC_IsNPC(monster)
 	BaseNPC_IsAlive
 	------------------------------------------------------------------------------------------
 */
-stock bool:BaseNPC_IsAlive(monster)
+stock bool BaseNPC_IsAlive(int monster)
 {
 	return (GetEntProp(monster, Prop_Data, "m_iHealth") > 0);
 }
@@ -162,9 +166,9 @@ stock bool:BaseNPC_IsAlive(monster)
 	BaseNPC_GetTarget
 	------------------------------------------------------------------------------------------
 */
-stock BaseNPC_GetTarget(monster)
+stock int BaseNPC_GetTarget(int monster)
 {
-	new target = GetEntDataEnt2(monster, gLeaderOffset);
+	int target = GetEntDataEnt2(monster, gLeaderOffset);
 	if (target > 0 && IsClientConnectedIngame(target) && IsPlayerAlive(target))
 		return (target);
 	
@@ -176,13 +180,13 @@ stock BaseNPC_GetTarget(monster)
 	BaseNPC_Think
 	------------------------------------------------------------------------------------------
 */
-public Action:BaseNPC_Think(Handle:timer, any:monsterRef)
+public Action BaseNPC_Think(Handle timer, any monsterRef)
 {
 	#if defined DEBUG
 		LogMessage("BaseNPC_Think()::START");
 	#endif
 
-	new monster = EntRefToEntIndex(monsterRef);
+	int monster = EntRefToEntIndex(monsterRef);
 
 	if (monster != INVALID_ENT_REFERENCE)
 	{
@@ -202,15 +206,15 @@ public Action:BaseNPC_Think(Handle:timer, any:monsterRef)
 			
 			if (!player || !BaseNPC_CanSeeEachOther(monster, player))
 			{
-				new owner = BaseNPC_GetOwner(monster);
+				int owner = BaseNPC_GetOwner(monster);
 				if (owner == player) // Monster cannot go against his owner
 					player = 0;
 				
-				new ownerTeam = -1;
+				int ownerTeam = -1;
 				if (owner)
 					ownerTeam = GetClientTeam(owner);
 				
-				for (new i = 1; i <= MaxClients; i++)
+				for (int i = 1; i <= MaxClients; i++)
 				{
 					if (IsClientConnectedIngame(i) && IsPlayerAlive(i) && (ownerTeam != -1 || (GetClientTeam(i) != ownerTeam)))
 					{
@@ -245,7 +249,7 @@ public Action:BaseNPC_Think(Handle:timer, any:monsterRef)
 	return (Plugin_Continue);
 }
 
-public bool:TraceEntityFilterWall(entity, contentsMask)
+public bool TraceEntityFilterWall(int entity, int contentsMask)
 {
 	return (entity == 1);
 }
@@ -255,20 +259,20 @@ public bool:TraceEntityFilterWall(entity, contentsMask)
 	BaseNPC_Touch
 	------------------------------------------------------------------------------------------
 */
-public Action:BaseNPC_Touch(entity, other)
+public Action BaseNPC_Touch(int entity, int other)
 {
 	#if defined DEBUG
 		LogMessage("BaseNPC_Touch()::START");
 	#endif
 	if (other)
 	{
-		new String:edictname[32];
+		char edictname[32];
 		GetEdictClassname(other, edictname, 32);
 		
 		if (StrEqual("player", edictname))
 		{
 			#if defined DEBUG
-				new String:sClientname[32];
+				char sClientname[32];
 				GetClientName(other, sClientname, 32);
 				LogMessage("BaseNPC_Touch()::gLeaderOffset==%s", sClientname);
 			#endif
@@ -288,20 +292,22 @@ public Action:BaseNPC_Touch(entity, other)
 	BaseNPC_Hurt
 	------------------------------------------------------------------------------------------
 */
-stock bool:BaseNPC_Hurt(monster, attacker, damage = 0, String:sound[32])
+stock bool BaseNPC_Hurt(int monster, int attacker, int damage = 0, char sound[32])
 {
 	#if defined DEBUG
 		LogMessage("BaseNPC_Hurt()::");
-		new String:sClientname[32], String:sEdictname[32];
+		char sClientname[32];
+		char sEdictname[32];
 		GetClientName(attacker, sClientname, 32);
 		GetEdictClassname(monster, sEdictname, 32);
 		LogMessage("monster==%s | gLeaderOffset==%s !!!", sEdictname, sClientname);
 	#endif
 	
-	new health = GetEntProp(monster, Prop_Data, "m_iHealth") - damage;
+	int health = GetEntProp(monster, Prop_Data, "m_iHealth") - damage;
 	SetEntProp(monster, Prop_Data, "m_iHealth", health);
 	
-	new Float:vEntPosition[3], Float:vAngle[3];
+	float vEntPosition[3];
+	float vAngle[3];
 	GetEntPropVector(monster, Prop_Send, "m_vecOrigin", vEntPosition);
 	EmitSoundToAll(sound, monster, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL, -1, vEntPosition);
 	
@@ -314,7 +320,7 @@ stock bool:BaseNPC_Hurt(monster, attacker, damage = 0, String:sound[32])
 		return (true);
 	}
 
-	decl String:tmp[32];
+	char tmp[32];
 	GetEntPropString(monster, Prop_Data, "m_iName", tmp, sizeof(tmp));
 	
 	vEntPosition[2] += 70.0;
@@ -348,7 +354,7 @@ stock bool:BaseNPC_Hurt(monster, attacker, damage = 0, String:sound[32])
 	SetVariantString("BloodImpact");
 	AcceptEntityInput(StringToInt(tmp), "DispatchEffect"); 
 	
-	new String:edictname[32];
+	char edictname[32];
 	GetEdictClassname(attacker, edictname, 32);
 	
 	if (StrEqual(edictname, "player") && !GetEntDataEnt2(monster, gLeaderOffset))
@@ -366,7 +372,7 @@ stock bool:BaseNPC_Hurt(monster, attacker, damage = 0, String:sound[32])
 	BaseNPC_Death
 	------------------------------------------------------------------------------------------
 */
-stock BaseNPC_Death(monster, attacker = 0, score = 1)
+stock void BaseNPC_Death(int monster, int attacker = 0, int score = 1)
 {
 	#if defined DEBUG
 		LogMessage("BaseNPC_Death()::START");
@@ -378,18 +384,19 @@ stock BaseNPC_Death(monster, attacker = 0, score = 1)
 		
 		//BaseNPC_Dissolve(monster);
 		
-		decl String:tmp[32];
+		char tmp[32];
 		GetEntPropString(monster, Prop_Data, "m_iName", tmp, sizeof(tmp));
-		new monster_tmp = EntRefToEntIndex(StringToInt(tmp));
+		int monster_tmp = EntRefToEntIndex(StringToInt(tmp));
 		AcceptEntityInput(monster_tmp, "BecomeRagdoll");
-		RemoveEntity(monster, 1.0);
+		KillEntity(monster, 1.0);
 		
 		gNPCCount--;
 		gLastKilledNPC = monster;
 		
 		if (attacker && IsValidEntity(attacker) && IsValidEdict(attacker))
 		{
-			new String:monsterClassname[32], String:attackerClassname[32];
+			char monsterClassname[32];
+			char attackerClassname[32];
 			GetEdictClassname(monster, monsterClassname, 32);
 			GetEdictClassname(attacker, attackerClassname, 32);
 			
@@ -397,13 +404,13 @@ stock BaseNPC_Death(monster, attacker = 0, score = 1)
 			{
 				SetEntProp(attacker, Prop_Data, "m_iFrags", GetClientFrags(attacker) + score);
 				
-				new money = GetEntProp(attacker, Prop_Send, "m_iAccount") + 1000 * score;
+				int money = GetEntProp(attacker, Prop_Send, "m_iAccount") + 1000 * score;
 				if (money <= 16000)
 					SetEntProp(attacker, Prop_Send, "m_iAccount", money);
 				else
 					SetEntProp(attacker, Prop_Send, "m_iAccount", 16000);
 				
-				decl String:playername[64];
+				char playername[64];
 				GetClientName(attacker, playername, 64);
 				SendKeyHintTextToAll("%s was killed by %s!\nAround %i NPC(s) left", monsterClassname, playername, gNPCCount);
 			}
@@ -432,7 +439,7 @@ stock BaseNPC_Death(monster, attacker = 0, score = 1)
 	BaseNPC_SetAnimation
 	------------------------------------------------------------------------------------------
 */
-stock BaseNPC_SetAnimation(monster, String:animation[32], Float:animtime = 0.0, Float:time = 0.0)
+stock void BaseNPC_SetAnimation(int monster, char animation[32], float animtime = 0.0, float time = 0.0)
 {
 	#if defined DEBUG
 		LogMessage("BaseNPC_SetAnimation()::START");
@@ -440,7 +447,7 @@ stock BaseNPC_SetAnimation(monster, String:animation[32], Float:animtime = 0.0, 
 	
 	if (time == 0.0)
 	{
-		new String:edictname[32];
+		char edictname[32];
 		GetEdictClassname(monster, edictname, 32);
 		if (!IsValidEdict(monster) || !IsValidEntity(monster) || StrContains(edictname, "npc_") == -1)
 		{
@@ -451,9 +458,9 @@ stock BaseNPC_SetAnimation(monster, String:animation[32], Float:animtime = 0.0, 
 
 		if (GetEntPropFloat(monster, Prop_Data, "m_flNextAttack") < GetGameTime())
 		{
-			decl String:tmp[32];
+			char tmp[32];
 			GetEntPropString(monster, Prop_Data, "m_iName", tmp, sizeof(tmp));
-			new monster_tmp = EntRefToEntIndex(StringToInt(tmp));
+			int monster_tmp = EntRefToEntIndex(StringToInt(tmp));
 		
 			if (IsValidEdict(monster_tmp) && IsValidEntity(monster_tmp))
 			{
@@ -471,7 +478,7 @@ stock BaseNPC_SetAnimation(monster, String:animation[32], Float:animtime = 0.0, 
 	}
 	else
 	{
-		new Handle:data;
+		Handle data;
 		CreateDataTimer(time, BaseNPC_SetAnimation_Timer, data, TIMER_FLAG_NO_MAPCHANGE);
 		WritePackCell(data, EntIndexToEntRef(monster));
 		WritePackFloat(data, animtime);
@@ -488,16 +495,16 @@ stock BaseNPC_SetAnimation(monster, String:animation[32], Float:animtime = 0.0, 
 	BaseNPC_SetAnimation_Timer
 	------------------------------------------------------------------------------------------
 */
-public Action:BaseNPC_SetAnimation_Timer(Handle:timer, Handle:data)
+public Action BaseNPC_SetAnimation_Timer(Handle timer, Handle data)
 {
 	#if defined DEBUG
 		LogMessage("BaseNPC_SetAnimation_Timer()::START");
 	#endif
 	ResetPack(data);
 	
-	new monster = EntRefToEntIndex(ReadPackCell(data));
-	new Float:animtime = ReadPackFloat(data);
-	new String:animation[32];
+	int monster = EntRefToEntIndex(ReadPackCell(data));
+	float animtime = ReadPackFloat(data);
+	char animation[32];
 	ReadPackString(data, animation, sizeof(animation));
 	
 	if (monster != INVALID_ENT_REFERENCE) 
@@ -513,7 +520,7 @@ public Action:BaseNPC_SetAnimation_Timer(Handle:timer, Handle:data)
 	BaseNPC_SetAnimationTime
 	------------------------------------------------------------------------------------------
 */
-stock BaseNPC_SetAnimationTime(monster, Float:time = 0.0)
+stock void BaseNPC_SetAnimationTime(int monster, float time = 0.0)
 {
 	#if defined DEBUG
 		LogMessage("BaseNPC_SetAnimationTime(...)");
@@ -527,7 +534,7 @@ stock BaseNPC_SetAnimationTime(monster, Float:time = 0.0)
 	This will get the owner from the pedmode
 	------------------------------------------------------------------------------------------
 */
-stock BaseNPC_GetOwner(monster)
+stock int BaseNPC_GetOwner(int monster)
 {
 	return (GetEntProp(monster, Prop_Data, "m_iHammerID"));
 }
@@ -538,7 +545,7 @@ stock BaseNPC_GetOwner(monster)
 	This will set the owner for the pedmode
 	------------------------------------------------------------------------------------------
 */
-stock BaseNPC_SetOwner(monster, owner)
+stock void BaseNPC_SetOwner(int monster, int owner)
 {
 	#if defined DEBUG
 		LogMessage("BaseNPC_SetOwner(...)");
@@ -551,11 +558,12 @@ stock BaseNPC_SetOwner(monster, owner)
 	BaseNPC_CanSeeEachOther
 	------------------------------------------------------------------------------------------
 */
-stock bool:BaseNPC_CanSeeEachOther(monster, target, Float:distance = 0.0, Float:monsterheight = 50.0)
+stock bool BaseNPC_CanSeeEachOther(int monster, int target, float distance = 0.0, float monsterheight = 50.0)
 {
 	if (IsValidEdict(target) && IsValidEntity(target) && IsClientConnected(target) && IsClientInGame(target) && IsPlayerAlive(target))
 	{
-		new Float:vMonsterPosition[3], Float:vTargetPosition[3];
+		float vMonsterPosition[3];
+		float vTargetPosition[3];
 		
 		GetEntPropVector(monster, Prop_Send, "m_vecOrigin", vMonsterPosition);
 		vMonsterPosition[2] += monsterheight;
@@ -564,7 +572,7 @@ stock bool:BaseNPC_CanSeeEachOther(monster, target, Float:distance = 0.0, Float:
 		
 		if (distance == 0.0 || GetVectorDistance(vMonsterPosition, vTargetPosition, false) < distance)
 		{
-			new Handle:trace = TR_TraceRayFilterEx(vMonsterPosition, vTargetPosition, MASK_SOLID_BRUSHONLY, RayType_EndPoint, BaseNPC_TraceFilter);
+			Handle trace = TR_TraceRayFilterEx(vMonsterPosition, vTargetPosition, MASK_SOLID_BRUSHONLY, RayType_EndPoint, BaseNPC_TraceFilter);
 
 			if(TR_DidHit(trace))
 			{
@@ -580,7 +588,7 @@ stock bool:BaseNPC_CanSeeEachOther(monster, target, Float:distance = 0.0, Float:
 	return (false);
 }
 
-public bool:BaseNPC_TraceFilter(entity, contentsMask, any:data)
+public bool BaseNPC_TraceFilter(int entity, int contentsMask, any data)
 {
 	//if( !entity || entity <= MaxClients || !IsValidEntity(entity) || entity == data) // dont let WORLD, or invalid entities be hit
 	if(entity != data)
@@ -594,16 +602,16 @@ public bool:BaseNPC_TraceFilter(entity, contentsMask, any:data)
 	FindFirstTargetInRange
 	------------------------------------------------------------------------------------------
 */
-stock FindFirstTargetInRange(entity, Float:vAngle[3], Float:vEntPosition[3], Float:entHeight = 60.0)
+stock int FindFirstTargetInRange(int entity, float vAngle[3], float vEntPosition[3], float entHeight = 60.0)
 {
-	new Float:vClientPosition[3];
+	float vClientPosition[3];
 	
 	GetEntPropVector(entity, Prop_Send, "m_vecOrigin", vEntPosition);
 	vEntPosition[2] += entHeight;
 	
-	new owner = BaseNPC_GetOwner(entity);
+	int owner = BaseNPC_GetOwner(entity);
 	
-	for (new i = 1; i <= MaxClients; i++)
+	for (int i = 1; i <= MaxClients; i++)
 	{
 		if (IsClientConnected(i) && IsClientInGame(i) && IsPlayerAlive(i) && owner != i)
 		{
@@ -615,7 +623,7 @@ stock FindFirstTargetInRange(entity, Float:vAngle[3], Float:vEntPosition[3], Flo
 			//NormalizeVector(vAngle, vAngle);
 			GetVectorAngles(vAngle, vAngle);
 			
-			new Handle:trace = TR_TraceRayFilterEx(vEntPosition, vClientPosition, MASK_SHOT, RayType_EndPoint, TraceASDF, entity);
+			Handle trace = TR_TraceRayFilterEx(vEntPosition, vClientPosition, MASK_SHOT, RayType_EndPoint, TraceASDF, entity);
 			if(!TR_DidHit(trace))
 			{
 				CloseHandle(trace);
@@ -634,9 +642,9 @@ stock FindFirstTargetInRange(entity, Float:vAngle[3], Float:vEntPosition[3], Flo
 	IsTargetInRange
 	------------------------------------------------------------------------------------------
 */
-stock bool:IsTargetInRange(entity, client, Float:vAngle[3], Float:vEntPosition[3], Float:entHeight = 60.0)
+stock bool IsTargetInRange(int entity, int client, float vAngle[3], float vEntPosition[3], float entHeight = 60.0)
 {
-	new Float:vClientPosition[3];
+	float vClientPosition[3];
 	
 	GetEntPropVector(entity, Prop_Send, "m_vecOrigin", vEntPosition);
 	vEntPosition[2] += entHeight;
@@ -650,7 +658,7 @@ stock bool:IsTargetInRange(entity, client, Float:vAngle[3], Float:vEntPosition[3
 		//NormalizeVector(vAngle, vAngle);
 		GetVectorAngles(vAngle, vAngle);
 		
-		new Handle:trace = TR_TraceRayFilterEx(vEntPosition, vClientPosition, MASK_SHOT, RayType_EndPoint, TraceASDF, entity);
+		Handle trace = TR_TraceRayFilterEx(vEntPosition, vClientPosition, MASK_SHOT, RayType_EndPoint, TraceASDF, entity);
 		if(!TR_DidHit(trace))
 		{
 			CloseHandle(trace);
@@ -669,18 +677,18 @@ stock bool:IsTargetInRange(entity, client, Float:vAngle[3], Float:vEntPosition[3
 	BaseNPC_Dissolve
 	------------------------------------------------------------------------------------------
 */
-public BaseNPC_Dissolve(monster)
+public void BaseNPC_Dissolve(int monster)
 {
 	#if defined DEBUG
 		LogMessage("BaseNPC_Dissolve(...)");
 	#endif
 	if (BaseNPC_IsNPC(monster))
 	{
-		decl String:tmp[32];
+		char tmp[32];
 		GetEntPropString(monster, Prop_Data, "m_iName", tmp, sizeof(tmp));
-		new monster_tmp = EntRefToEntIndex(StringToInt(tmp));
+		int monster_tmp = EntRefToEntIndex(StringToInt(tmp));
 		
-		new ent = CreateEntityByName("env_entity_dissolver");
+		int ent = CreateEntityByName("env_entity_dissolver");
 		if (ent > 0)
 		{
 			//DispatchKeyValue(ragdoll, "targetname", tmp);
@@ -693,7 +701,7 @@ public BaseNPC_Dissolve(monster)
 		AcceptEntityInput(monster_tmp, "BecomeRagdoll");
 		//AcceptEntityInput(monster, "Kill");
 		
-		RemoveEntity(monster, 10.0);
+		KillEntity(monster, 10.0);
 		//RemoveEntity(monster_tmp, 0.5);
 	}
 	#if defined DEBUG
@@ -707,8 +715,8 @@ public BaseNPC_Dissolve(monster)
 	BaseNPC_HurtPlayer
 	------------------------------------------------------------------------------------------
 */
-new Float:NULL_FLOAT_VECTOR[3] = {0.0, 0.0, 0.0};
-stock BaseNPC_HurtPlayer(monster, target, damage, Float:range = 100.0, Float:vPunchangle[3] = NULL_FLOAT_VECTOR, Float:time = 0.0)
+float NULL_FLOAT_VECTOR[3] = {0.0, 0.0, 0.0};
+stock void BaseNPC_HurtPlayer(int monster, int target, int damage, float range = 100.0, float vPunchangle[3] = NULL_FLOAT_VECTOR, float time = 0.0)
 {
 	if (time == 0.0)
 	{
@@ -719,7 +727,8 @@ stock BaseNPC_HurtPlayer(monster, target, damage, Float:range = 100.0, Float:vPu
 
 		if (BaseNPC_IsAlive(monster) && target && IsClientConnected(target) && IsClientInGame(target) && IsPlayerAlive(target))
 		{
-			new Float:vClientPosition[3], Float:vEntPosition[3];
+			float vClientPosition[3];
+			float vEntPosition[3];
 
 			GetEntPropVector(monster, Prop_Send, "m_vecOrigin", vEntPosition);
 			GetClientEyePosition(target, vClientPosition);
@@ -739,7 +748,7 @@ stock BaseNPC_HurtPlayer(monster, target, damage, Float:range = 100.0, Float:vPu
 			LogMessage("BaseNPC_HurtPlayer(...)::time==%f", time);
 		#endif
 		
-		new Handle:data;
+		Handle data;
 		CreateDataTimer(time, BaseNPC_HurtPlayer_Timer, data, TIMER_FLAG_NO_MAPCHANGE);
 		WritePackCell(data, EntIndexToEntRef(monster));
 		WritePackCell(data, target);
@@ -756,15 +765,15 @@ stock BaseNPC_HurtPlayer(monster, target, damage, Float:range = 100.0, Float:vPu
 	BaseNPC_HurtPlayer_Timer
 	------------------------------------------------------------------------------------------
 */
-public Action:BaseNPC_HurtPlayer_Timer(Handle:timer, Handle:data)
+public Action BaseNPC_HurtPlayer_Timer(Handle timer, Handle data)
 {
 	ResetPack(data);
-	new monster = EntRefToEntIndex(ReadPackCell(data));
-	new target = ReadPackCell(data);
-	new damage = ReadPackCell(data);
-	new Float:range = ReadPackFloat(data);
+	int monster = EntRefToEntIndex(ReadPackCell(data));
+	int target = ReadPackCell(data);
+	int damage = ReadPackCell(data);
+	float range = ReadPackFloat(data);
 	
-	new Float:vPunchangle[3];
+	float vPunchangle[3];
 	vPunchangle[0] = ReadPackFloat(data);
 	vPunchangle[1] = ReadPackFloat(data);
 	vPunchangle[2] = ReadPackFloat(data);
@@ -778,7 +787,7 @@ public Action:BaseNPC_HurtPlayer_Timer(Handle:timer, Handle:data)
 	BaseNPC_PlaySound
 	------------------------------------------------------------------------------------------
 */
-stock BaseNPC_PlaySound(monster, String:sound[], Float:time = 0.0)
+stock void BaseNPC_PlaySound(int monster, char[] sound, float time = 0.0)
 {
 	if (time == 0.0)
 	{
@@ -786,7 +795,7 @@ stock BaseNPC_PlaySound(monster, String:sound[], Float:time = 0.0)
 			LogMessage("BaseNPC_PlaySound(...)::time==0.0");
 		#endif
 		
-		new Float:vEntPosition[3];
+		float vEntPosition[3];
 		GetEntPropVector(monster, Prop_Send, "m_vecOrigin", vEntPosition);
 		EmitSoundToAll(sound, 0, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL, -1, vEntPosition);
 	}
@@ -796,7 +805,7 @@ stock BaseNPC_PlaySound(monster, String:sound[], Float:time = 0.0)
 			LogMessage("BaseNPC_PlaySound(...)::time==%f", time);
 		#endif
 		
-		new Handle:data;
+		Handle data;
 		CreateDataTimer(time, BaseNPC_PlaySound_Timer, data, TIMER_FLAG_NO_MAPCHANGE);
 		WritePackCell(data, EntIndexToEntRef(monster));
 		WritePackString(data, sound);
@@ -808,12 +817,12 @@ stock BaseNPC_PlaySound(monster, String:sound[], Float:time = 0.0)
 	BaseNPC_PlaySound_Timer
 	------------------------------------------------------------------------------------------
 */
-public Action:BaseNPC_PlaySound_Timer(Handle:timer, Handle:data)
+public Action BaseNPC_PlaySound_Timer(Handle timer, Handle data)
 {
 	ResetPack(data);
 	
-	new monster = EntRefToEntIndex(ReadPackCell(data));
-	new String:sound[32];
+	int monster = EntRefToEntIndex(ReadPackCell(data));
+	char sound[32];
 	ReadPackString(data, sound, sizeof(sound));
 	
 	if (monster != INVALID_ENT_REFERENCE)	
@@ -825,7 +834,7 @@ public Action:BaseNPC_PlaySound_Timer(Handle:timer, Handle:data)
 	BaseNPC_LoadMonsterConfig
 	------------------------------------------------------------------------------------------
 */
-stock BaseNPC_LoadMonsterConfig(String:monstername[32], &Float:thinkrate, &Float:friction, &health)
+stock void BaseNPC_LoadMonsterConfig(char monstername[32], float& thinkrate, float& friction, int& health)
 {
 	if (!KvJumpToKey(kv, "NPCs") || !KvGotoFirstSubKey(kv, false))
 	{
@@ -833,7 +842,7 @@ stock BaseNPC_LoadMonsterConfig(String:monstername[32], &Float:thinkrate, &Float
 	}
 	else
 	{
-		decl String:sectionName[32];
+		char sectionName[32];
 		do
 		{
 			KvGetSectionName(kv, sectionName, sizeof(sectionName));
@@ -852,9 +861,9 @@ stock BaseNPC_LoadMonsterConfig(String:monstername[32], &Float:thinkrate, &Float
 	}
 }
 
-public Action:BaseNPC_HookHostageSound(clients[64], &numClients, String:sample[PLATFORM_MAX_PATH], &entity, &channel, &Float:volume, &level, &pitch, &flags)
+public Action BaseNPC_HookHostageSound(int clients[MAXPLAYERS], int& numClients, char sample[PLATFORM_MAX_PATH], int& entity, int& channel, float& volume, int& level, int& pitch, int& flags, char soundEntry[PLATFORM_MAX_PATH], int& seed)
 {
-	new String:edictname[32];
+	char edictname[32];
 	GetEdictClassname(entity, edictname, 32);
 	if (StrContains(edictname, "npc_") != -1)
 		return (Plugin_Stop);
@@ -862,24 +871,24 @@ public Action:BaseNPC_HookHostageSound(clients[64], &numClients, String:sample[P
 	return (Plugin_Continue);
 }
 
-public Action:OnHostageHurt(Handle:event, const String:name[], bool:dontBroadcast)
+public Action OnHostageHurt(Handle event, const char[] name, bool dontBroadcast)
 {
 	return (Plugin_Handled);
 }
 
-public Action:OnHostageFollows(Handle:event, const String:name[], bool:dontBroadcast)
+public Action OnHostageFollows(Handle event, const char[] name, bool dontBroadcast)
 {
 	return (Plugin_Handled);
 }
 
-public Action:OnHostageStopsFollowing(Handle:event, const String:name[], bool:dontBroadcast)
+public Action OnHostageStopsFollowing(Handle event, const char[] name, bool dontBroadcast)
 {
 	// new monster = GetEventInt(event, "hostage");
 	
 	return (Plugin_Handled);
 }
 
-public Action:OnHostageKilled(Handle:event, const String:name[], bool:dontBroadcast)
+public Action OnHostageKilled(Handle event, const char[] name, bool dontBroadcast)
 {
 	return (Plugin_Handled);
 }
